@@ -13,6 +13,8 @@ wiiload txt-read.dol file.txt
 
 where file.txt is on the SD card.
 
+The app will then ask you if you want to display line numbers. Press 1 for yes or 2 for no.
+
 Then you can use up and down to scroll, and home to exit.
 
 Simple, eh?
