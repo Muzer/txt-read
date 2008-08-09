@@ -1,0 +1,18 @@
+#summary Instructions
+
+= Introduction =
+
+These are the instructions for the use of my app
+
+
+= Details =
+
+To load it, you must use an app that lets you specify arguments. This currently means wiiload. So, it would be:
+
+wiiload txt-read.dol file.txt
+
+where file.txt is on the SD card.
+
+Then you can use up and down to scroll, and home to exit.
+
+Simple, eh?
