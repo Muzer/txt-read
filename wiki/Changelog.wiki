@@ -10,3 +10,5 @@ What has been changed
 *0.2*: First released version, added code to stop lines longer than the Wii's display width from breaking it.
 
 *0.3*: Added option to disable line numbers
+
+*0.4*: Fixed bug where some lines will be missed off the end of files meeting specific requirements
