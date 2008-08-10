@@ -7,13 +7,11 @@ These are the instructions for the use of my app
 
 = Details =
 
-To load it, you must use an app that lets you specify arguments. This currently means wiiload. So, it would be:
-
-wiiload txt-read.dol file.txt
-
-where file.txt is on the SD card.
+To load it, you can now use any method of loading homebrew.
 
 The app will then ask you if you want to display line numbers. Press 1 for yes or 2 for no.
+
+Then it lets you choose a file from the SD card. Currently, there is no subdirectory support, so text files must be in root.
 
 Then you can use up and down to scroll, and home to exit.
 
