@@ -12,3 +12,5 @@ What has been changed
 *0.3*: Added option to disable line numbers
 
 *0.4*: Fixed bug where some lines will be missed off the end of files meeting specific requirements
+
+*0.5*: Added file selector (currently buggy but works).
