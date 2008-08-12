@@ -1,0 +1,10 @@
+#summary The changes that have been made after the latest release
+
+= Introduction =
+
+These are not available in the latest release
+
+
+= Details =
+
+* Added nicer box drawings on the file select menu.
