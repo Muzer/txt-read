@@ -2,9 +2,11 @@
 
 = Introduction =
 
-These are not available in the latest release
+These are not available in the latest release. You can get them from the svn, by clicking the Source tab.
 
 
 = Details =
 
 * Added nicer box drawings on the file select menu.
+
+* Lots of code cleanup.
