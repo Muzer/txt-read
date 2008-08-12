@@ -1,18 +1,81 @@
-#summary Instructions
+{{{ ______   __   __   ______            ____     ____        __       __
+|      |  \ \ / /  |      |          |  _ |   | ___|      /  \     |  \
+|__  __|   \ X /   |__  __|   _____  | |_||   | |__      / /\ \    |   \
+  |  |      X X      |  |    |_____| |____|   | ___|    /  __  \   | |> |
+  |  |     / X \     |  |            | |\ \   | |__    /  /  \  \  |   /
+  |__|    /_/ \_\    |__|            |_| \_\  |____|  /__/    \__\ |__/}}}
 
-= Introduction =
+README
 
-These are the instructions for the use of my app
+txt-read is a simple text reader app for the Wii. It can read any file stored in plain text format. It uses the Wii's console, and has all the features you would expect from an app nowadays (Wiimote, Front SD, and Homebrew Channel support). "Me" in this document refers to Muzer
 
+CREATORS HISTORY
 
-= Details =
+txt-read was originally created by Muzer
+Then many parts were rewritten by mattgentl
+Then many features were added by Muzer
+Then it was released
+Then CraZzy added a file picker, and CraZzy and Muzer are currently working together.
 
-To load it, you can now use any method of loading homebrew.
+STEP-BY-STEP
 
-The app will then ask you if you want to display line numbers. Press 1 for yes or 2 for no.
+There are many ways to run this app. Once you've run the app, go to the bit marked ***.
 
-Then it lets you choose a file from the SD card. Currently, there is no subdirectory support, so text files must be in root.
+Homebrew Channel - SD
 
-Then you can use up and down to scroll, and home to exit.
+Go into the Homebrew Channel folder in this package, and if you don't already have one, copy the apps folder to the SD card. If you do have an apps folder, just copy the txt-read folder into the apps folder.
 
-Simple, eh?
+Homebrew Channel - Wiiload
+
+Go into the root directory of this archive, and type wiiload txt-read.dol. Remember, putting a file as the argument is still supported.
+
+Wii Homebrew Launcher
+
+I have not been following this app since the homebrew channel came out, but when I used it, I had to make a Homebrew folder in the SD card, then make a txt-read folder, then copy txt-read.dol into this folder and rename to boot.dol, and make a title.txt with the name, and title.bmp with an image (NOT INCLUDED)
+
+Twilight Hack
+
+Copy txt-read.dol onto your SD card and rename it to boot.dol
+
+***
+
+OK, now it's booted, it will give you a list of files on your SD card. Find a file that is plain text, and press "A" to load it. Note: To go up one directory, choose ".."
+
+Controls for the file picker:
+Up and Down - move up or down one file
+Left and right - move up or down five files
+A - Load file or enter directory (note that while the ".." directory is implemented properly, the "." directory tends to do some random things.)
+Home - Quit the app back to whatever you used to load it
+
+Once you've picked your file, the program will do quite a few operations. The two that take any amount of time are counting the number of lines in the file, and loading the file into the Wii's memory. Therefore, there is a rotating line (the | / - \ thing) for the former operation, and a progress bar and percentage for the latter.
+
+After it's loaded (which is usually super-fast for ordinary sized text files) you will see your file. There are a few things you can do here.
+
+Controls for the file viewer:
+Up and Down - move up or down one line
+1 - Return to file select screen, staying in the directory (folder) you were in
+2 - Return to file select screen, going back to root, and reasking argument question if required (see below)
+A - Toggle line numbers on or off
+Home - Quit the app back to whatever you used to load it
+
+ABOUT ARGUMENTS
+
+If you use a program such as wiiload to load the file, you may specify the file you want as an argument. If you do, the app will ask you whether you want to load it as the file or not. Press 1 for yes and 2 for no.
+
+VERSION HISTORY
+
+All versions starting with "0" are unstable betas.
+
+Older versions are available on google code under deprecated versions.
+
+0.1: First stable version 
+
+0.2: First released version, added code to stop lines longer than the Wii's display width from breaking it. 
+
+0.3: Added option to disable line numbers 
+
+0.4: Fixed bug where some lines will be missed off the end of files meeting specific requirements 
+
+0.5: Added file selector (currently buggy but works) (thanks to CraZzy).
+
+1.0: Finished file selector (partially me, partially CraZzy) - with subdirectories and proper scrolling and skip 5 files feature, added quick usage info, fixed many bugs, added option to toggle numbers, added a return to selector feature, added a progress bar, reinstated support for arguments.
