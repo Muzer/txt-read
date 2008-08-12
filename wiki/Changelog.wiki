@@ -14,3 +14,5 @@ What has been changed
 *0.4*: Fixed bug where some lines will be missed off the end of files meeting specific requirements
 
 *0.5*: Added file selector (currently buggy but works).
+
+*1.0*: Finished file selector (partially me, partially CraZzy) - with subdirectories and proper scrolling and skip 5 files feature, added quick usage info, fixed many bugs, added option to toggle numbers, added a return to selector feature, added a progress bar, reinstated support for arguments.
