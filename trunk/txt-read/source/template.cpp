@@ -18,6 +18,18 @@
 
 
 
+void _wiilight_turn(int enable);
+static void * _wiilight_loop(void *arg);
+static vu32 *_wiilight_reg = (u32*)0xCD0000C0;
+
+void WIILIGHT_TurnOn();
+int WIILIGHT_GetLevel();
+int WIILIGHT_SetLevel(int level);
+
+void WIILIGHT_Toggle();
+void WIILIGHT_TurnOff();
+
+
 using namespace std;
 
 char filename[MAXPATHLEN], files[1000][80];//1000 files with 80 chars
@@ -38,9 +50,9 @@ int howManyLines (char *filename)
     FILE *fp;
     int numLines = 0;
     char *c, line[1000];    // ONLY ALLOW 1000 CHARS PER LINE
-
     fp = fopen(filename, "r");
     clrscr();
+    WIILIGHT_TurnOn();
     if (fp)
     {
         do
@@ -54,6 +66,8 @@ int howManyLines (char *filename)
             if (numLines % 80 > 19 & numLines % 80 < 40) cout << "/";
             if (numLines % 80 > 39 & numLines % 80 < 60) cout << "-";
             if (numLines % 80 > 59) cout << "\\";
+	    WIILIGHT_SetLevel(numLines % 256);
+	    
         }
         while (c);
         fclose (fp);
@@ -70,13 +84,14 @@ char **createArrayFromFile(char *filename, float numLines)
     char currLine [1000], loading = 196;
 
     fp = fopen(filename, "r"); // OPENING FILE
-
+    WIILIGHT_TurnOn();
     if (fp)
     {
         // MALLOC THE MEMORY FOR THE TOTAL ARRAY (SIZE OF FILE)
         fseek(fp, 0, SEEK_END);
         lines = (char**)malloc(ftell(fp));
         float equalses, percentage;
+	int light;
         fseek(fp, 0, SEEK_SET);
         clrscr();
 
@@ -97,12 +112,15 @@ char **createArrayFromFile(char *filename, float numLines)
             printf("\033[2;0f");
             equalses = (i / (numLines - 1)) * 80;
             percentage = (i / (numLines - 1)) * 100;
+	    light = (i / (numLines - 1)) * 255;
 
             for ( j = 0; j < equalses;++j)
             {
                 cout << loading;
             }
             cout << "\n" << percentage << "%  ";
+	    WIILIGHT_SetLevel(light);
+	    
         }
 
 

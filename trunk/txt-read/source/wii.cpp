@@ -1,9 +1,11 @@
 #include "wii.h"
-
 static void *xfb = NULL;
 static GXRModeObj *rmode = NULL;
 
+void WIILIGHT_Init();
+
 void init(){
+	
   	// Initialise the video system
 	VIDEO_Init();
 	
@@ -38,4 +40,5 @@ void init(){
 
 	// Initalise all inserted memory storage devices
 	fatInitDefault();
+	WIILIGHT_Init();
 }
