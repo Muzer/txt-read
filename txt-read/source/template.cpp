@@ -399,6 +399,25 @@ bool LoadArgumentAsFile()
 
 }
 
+bool LoadFrom()
+{
+while (1)
+    {
+        WPAD_ScanPads();
+        if ( WPAD_ButtonsDown(0) & WPAD_BUTTON_HOME ) exit(0);
+
+        if ( WPAD_ButtonsDown(0) & WPAD_BUTTON_1)
+        {
+            return true;
+        }
+        if ( WPAD_ButtonsDown(0) & WPAD_BUTTON_2 )
+        {
+            return false;
+        }
+
+    }
+}
+
 
 //---------------------------------------------------------------------------------
 int main(int argc, char **argv)
@@ -415,7 +434,7 @@ veryfirst:
     clrscr();
     char **lines;
 
-    if (argc >= 2 && argv[1] != "")
+    if (argc == 2 && argv[1] != "")
     {
         cout << "It has been detected that you have specified an argument." << endl << "Do you want this to be loaded as your file? Press 1 for yes, 2 for no." << endl << "The argument you specified is: " << argv[1];
         if (LoadArgumentAsFile())
@@ -428,6 +447,17 @@ veryfirst:
 first:
     clrscr();
     cout << "\x1b[0;5H" << endl;
+    cout << "Press 1 for Load from Sd Card" << endl;
+    cout << "Press 2 for Load from USB" << endl;
+    if(!LoadFrom())
+    {
+        directory = "usb://";
+    }
+
+
+
+    clrscr();
+    cout << "\x1b[0;5H" << endl;
     boxDrawing();
 
 
@@ -438,8 +468,7 @@ first:
 
     cout << "\x1b[37;1m";
 
-
-
+    tempName = directory+file;
 
 startofstuff:
 
