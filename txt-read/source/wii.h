@@ -3,5 +3,10 @@
 #include <gccore.h>
 #include <wiiuse/wpad.h>
 #include <fat.h>
+
+
+
+
+
 void init();
 #endif
