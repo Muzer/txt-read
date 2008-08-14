@@ -67,7 +67,7 @@ int howManyLines (char *filename)
             if (numLines % 80 > 39 & numLines % 80 < 60) cout << "-";
             if (numLines % 80 > 59) cout << "\\";
 	    WIILIGHT_SetLevel(numLines % 256);
-	    
+
         }
         while (c);
         fclose (fp);
@@ -120,7 +120,7 @@ char **createArrayFromFile(char *filename, float numLines)
             }
             cout << "\n" << percentage << "%  ";
 	    WIILIGHT_SetLevel(light);
-	    
+
         }
 
 
@@ -417,25 +417,6 @@ bool LoadArgumentAsFile()
 
 }
 
-bool LoadFrom()
-{
-while (1)
-    {
-        WPAD_ScanPads();
-        if ( WPAD_ButtonsDown(0) & WPAD_BUTTON_HOME ) exit(0);
-
-        if ( WPAD_ButtonsDown(0) & WPAD_BUTTON_1)
-        {
-            return true;
-        }
-        if ( WPAD_ButtonsDown(0) & WPAD_BUTTON_2 )
-        {
-            return false;
-        }
-
-    }
-}
-
 
 //---------------------------------------------------------------------------------
 int main(int argc, char **argv)
@@ -463,17 +444,6 @@ veryfirst:
     }
 
 first:
-    clrscr();
-    cout << "\x1b[0;5H" << endl;
-    cout << "Press 1 for Load from Sd Card" << endl;
-    cout << "Press 2 for Load from USB" << endl;
-    if(!LoadFrom())
-    {
-        directory = "usb://";
-    }
-
-
-
     clrscr();
     cout << "\x1b[0;5H" << endl;
     boxDrawing();
