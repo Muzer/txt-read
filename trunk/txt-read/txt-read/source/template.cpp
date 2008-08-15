@@ -473,7 +473,7 @@ void mainmenu(){
 void networkupdate(string type){
 clrscr();
 cout << "Feature not implemented, press A or Enter";
-sleep(2);
+sleep(1);
 while(1){
 	keyboardEvent nav;
         WPAD_ScanPads();
@@ -526,9 +526,8 @@ keyboardEvent nav;
         {
             clrscr();
             if(menuselection==0) return;
-            if(menuselection==1) networkupdate("stable");
-	    if(menuselection==2) networkupdate("svn");
-	    return;
+            if(menuselection==1) {networkupdate("stable");sleep(1);mainmenu();}
+	    if(menuselection==2) {networkupdate("svn");sleep(1);mainmenu();}
             while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
         }
 }
