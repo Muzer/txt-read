@@ -11,14 +11,14 @@
 
 #include "wii.h"
 
-
-#define clrscr()  cout << "\033[2J\033[2;0f";
-#define delay()   sleep(1);
-#define moveIt()  cout << "\x1b[5;5H" << endl;
-
-
+//Some things to keep the code tidy
+#define clrscr()  cout << "\033[2J\033[2;0f"; // Clears screen and moves cursor to row 2, column 0
+#define delay()   sleep(1); // waits for one second
+#define moveIt()  cout << "\x1b[5;5H" << endl; // Moves cursor to row 5, column 0
 
 
+
+//Some stuff for the wii's disc slot light
 void _wiilight_turn(int enable);
 static void * _wiilight_loop(void *arg);
 static vu32 *_wiilight_reg = (u32*)0xCD0000C0;
@@ -33,27 +33,29 @@ void WIILIGHT_TurnOff();
 
 using namespace std;
 
-char filename[MAXPATHLEN], files[1000][80];//1000 files with 80 chars
-int id = 0, longer = 0, nbLines = 0, startfile = 0;
+//Variables
+char filename[MAXPATHLEN], files[1000][80];//1000 files with 80 chars, create a char array for storing the filenames
+int id = 0, longer = 0, nbLines = 0, startfile = 0;//id = file selected, longer = the number of lines extra caused by lines being longer than 80 chars, nbLines = doesn't seem to be used, might delete this, startfile = id of file displayed at the top of the screen in the list of files, used for scrolling
 int fcount = 0; // To count files
-char *file = "";
-bool numbers = false, found;
-u32 startLine, numLines;
-string directory = "/", tempName;
-vector<string> dirs;
-int cursorline = 0;
-int cursorpos = 0;
-int menuselection = 0;
+char *file = "";//Name of the selected file
+bool numbers = false, found;//numbers = whether line numbers are enabled (1) or not (0), found = whether the file is found (?)
+u32 startLine, numLines;// startLine = number of the line at the top of the screen, numLines = number of lines in file
+string directory = "/", tempName;// directory sets the starting directory, tempName = directory + filename, or the first argument if one is supplied
+vector<string> dirs;//The directories
+int cursorline = 0;//Unused, ready for editting
+int cursorpos = 0;//As Above
+int menuselection = 0;//Selection in the main menu
 
 int boxDrawing();
 
 
-// RETURNS NUMBER OF LINES IN FILE filename
+// RETURNS NUMBER OF LINES IN FILE filename. This is used to calculate the size that the array needs to be.
 int howManyLines (char *filename)
 {
+	//Init variables and open the file, also init the wiilight and clear the screen.
     FILE *fp;
     int numLines = 0;
-    char *c, line[1000];    // ONLY ALLOW 1000 CHARS PER LINE
+    char *c, line[1000];    // ONLY ALLOW 1000 CHARS PER LINE, this will not affect it when it is actually loaded into RAM.
     fp = fopen(filename, "r");
     clrscr();
     WIILIGHT_TurnOn();
@@ -61,8 +63,11 @@ int howManyLines (char *filename)
     {
         do
         {
+        	//Get a line from the file, and store it into variable line. Also put it into c.
             c = fgets(line, 1000, fp);
+            //If this is a valid line
             if (c)
+            	//add one to the number of lines, and do some snazzy effects including a spinning bar and fading of the light...
                 numLines++;
             cout << "\033[2;0f";
             cout << "Counting number of lines.\nPlease wait. ";
@@ -74,14 +79,16 @@ int howManyLines (char *filename)
 	    
         }
         while (c);
+        //Close the file
         fclose (fp);
     }
     return numLines;
 }
 
-// RETURNS AN ARRAY OF STRINGS FROM FILE filename
+// RETURNS AN ARRAY OF STRINGS FROM FILE filename. This array is from then on used for everything.
 char **createArrayFromFile(char *filename, float numLines)
 {
+	//init some variables, open the file and init the wiilight
     int i, j;
     FILE *fp;
     char **lines;
@@ -94,11 +101,12 @@ char **createArrayFromFile(char *filename, float numLines)
         // MALLOC THE MEMORY FOR THE TOTAL ARRAY (SIZE OF FILE)
         fseek(fp, 0, SEEK_END);
         lines = (char**)malloc(ftell(fp));
-        float equalses, percentage;
-	int light;
+        float equalses, percentage;//Used for loading bar and percentage respectively
+	int light;//Brightness of light
+		//Go back to the beginning of the file and clear the screen
         fseek(fp, 0, SEEK_SET);
         clrscr();
-
+        
         for (i = 0; i < numLines; i++)
         {
             // READ IN A LINE
@@ -112,12 +120,12 @@ char **createArrayFromFile(char *filename, float numLines)
             // COPY THE LINE INTO THE ARRAY
             strcpy (lines[i], currLine);
 
-            // CALCULATE PERCENTAGE
+            // GO TO POSITION 2,0 AND CALCULATE PERCENTAGE
             printf("\033[2;0f");
             equalses = (i / (numLines - 1)) * 80;
             percentage = (i / (numLines - 1)) * 100;
 	    light = (i / (numLines - 1)) * 255;
-
+			//PRINT THE LOADING BAR, PERCENTAGE, AND FADE THE LIGHT
             for ( j = 0; j < equalses;++j)
             {
                 cout << loading;
@@ -142,33 +150,33 @@ char **createArrayFromFile(char *filename, float numLines)
 // DISPLAYS numLines LINES OF ARRAY STARTING AT startLine
 int displayLines(int startLine, int numLines, char **lines, bool numbers, int totalLines)
 {
+	//Init variables
     int i, j, longer = 0;
     char vert_bar = 179;
     string display_str = "";
-
+    
     for (j = startLine - 1; j < numLines + startLine - 1 - longer; j++)
     {
-        if (totalLines == j) goto jumptodisplay; //to stop crashes on small files
+        if (totalLines == j) break; //if the number of lines in the file reaches j, STOP, otherwise it will crash on smaller files...
 
-        if (numbers) longer = longer + ((strlen(lines[j]) + 7) / 80);
-        else longer = longer + (strlen(lines[j]) / 80);
+        if (numbers) longer = longer + ((strlen(lines[j]) + 7) / 80); //If numbers are on, add the number of extra lines due to line longness the wii will display to longer, but add 7 to the line length (number of chars in line number)
+        else longer = longer + (strlen(lines[j]) / 80);//Else, add the number of extra lines due to line longness the wii will display to longer (don't add 7)
     }
 
-jumptodisplay:
 
     clrscr();
     for (i = startLine - 1; i < numLines + startLine - 1 - longer; i++)
     {
-        if (totalLines == i) goto stopdisplaying; //to stop crashes on small files
+        if (totalLines == i) break; //if the number of lines in the file reaches i, STOP, otherwise it will crash on smaller files...
 
-        if (numbers) printf ("%04d - %s", i + 1, lines[i]);
-        else cout << lines[i];
+        if (numbers) printf ("%04d - %s", i + 1, lines[i]);//Printf the line number plus the line if numbers are on. Note: printf is used here because I don't know how to display numbers with a fixed number of digits using cout...
+        else cout << lines[i];//Otherwise just cout the line
     }
 
-stopdisplaying:
     return longer;
 }
 
+//This gets called whenever a directory is opened, it initialises the directory and puts its contents into an array
 int List(string &location)
 {
     fcount= 0;
@@ -217,6 +225,7 @@ before:
 
 }
 
+//List directory
 void Select(int iSelected)
 {
     int x;
@@ -225,7 +234,7 @@ void Select(int iSelected)
 
     for (x=startfile;x!=startfile + 20;x++)
     {
-        if (x==fcount) goto safety; //safety, I think it might be needed if things in current dir < 20
+        if (x==fcount) return; //this needed if things in current dir < 20
 
         if (x==iSelected)
         {
@@ -238,12 +247,10 @@ void Select(int iSelected)
         }
     }
 
-safety:;
-
 }
 
 
-
+//Controls for file selection...
 int selectFiles()
 {
     while (1)
@@ -410,6 +417,7 @@ keyboardEvent nav;
 
 }
 
+//Controls for whether to use the wiiload (or possibly Wii HL, but untested) argument as the file or not.
 bool LoadArgumentAsFile()
 {
     while (1)
@@ -435,6 +443,8 @@ keyboardEvent nav;
 
 }
 
+//Broken code for USB Mass Storage, if anyone can get this working I would be happy...
+
 // bool LoadFrom()
 // {
 // while (1)
@@ -459,17 +469,21 @@ keyboardEvent nav;
 //     }
 // }
 
+//Prints the Main menu
 void mainmenu(){
     clrscr();
     cout << "txt-read Main Menu\n\n";
-    if(menuselection == 0) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Load a file"<< "\x1b[40;0m\x1b[37;1m" << endl;}
-    else{cout <<  setw(3) << " "  << "Load a file" << endl;}
+    if(menuselection == 0) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Load a file from SD"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    else{cout <<  setw(3) << " "  << "Load a file from SD" << endl;}
     if(menuselection == 1) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Update to the latest stable version of txt-read"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Update to the latest stable version of txt-read" << endl;}
     if(menuselection == 2) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Update to the latest unstable (svn) version of txt-read"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Update to the latest unstable (svn) version of txt-read" << endl;}
+    if(menuselection == 3) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Exit to loader"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    else{cout <<  setw(3) << " "  << "Exit to loader" << endl;}
 }
 
+//Placeholder for network update, Come on AlexLH!
 void networkupdate(string type){
 clrscr();
 cout << "Feature not implemented, press A or Enter";
@@ -486,6 +500,7 @@ while(1){
 }
 }
 
+//Controls for the menu
 void menucontrols(){
 while(1){
 keyboardEvent nav;
@@ -505,7 +520,7 @@ keyboardEvent nav;
         }
         if ((WPAD_ButtonsUp(0) & WPAD_BUTTON_DOWN) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_DOWN)))
         {
-            if (menuselection<2)
+            if (menuselection<3)
             {
                 ++menuselection;
 		mainmenu();
@@ -528,11 +543,13 @@ keyboardEvent nav;
             if(menuselection==0) return;
             if(menuselection==1) {networkupdate("stable");sleep(1);mainmenu();}
 	    if(menuselection==2) {networkupdate("svn");sleep(1);mainmenu();}
+	    if(menuselection==3) {clrscr(); cout << "Returning to loader..."; exit(0);}
             while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
         }
 }
 }
 
+//Main loop
 //---------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
@@ -548,24 +565,25 @@ keyboardEvent nav;
 
 veryfirst:
 
-
+	//Display the main menu, allow the user to select an option, and once Load a file from SD is selected, wait for 2 seconds...
     mainmenu();
     menucontrols();
     sleep(2);
-
+	//Clear the screen, and make the big array
     clrscr();
     char **lines;
-
+	//IF the user specified an argument and that argument is not null (sendelf fix), ask them if they want to load the file they specified
     if (argc == 2 && argv[1] != "")
     {
         cout << "It has been detected that you have specified an argument." << endl << "Do you want this to be loaded as your file? Press 1 for yes, 2 for no." << endl << "The argument you specified is: " << argv[1];
-        if (LoadArgumentAsFile())
+        if (LoadArgumentAsFile())//If they said yes
         {
-            tempName = argv[1];
-            goto startofstuff;
+            tempName = argv[1];//Let the filename be the argument
+            goto startofstuff;//And skip to the action
         }
     }
 
+//Broken code for loading from USB
 /*
     clrscr();
     cout << "\x1b[0;5H" << endl;
@@ -578,18 +596,20 @@ veryfirst:
 
 first:
 
+	//Clear screen, move cursor and print the box drawing
     clrscr();
     cout << "\x1b[0;5H" << endl;
     boxDrawing();
 
-
+	//Move the cursor, Set directory to root, list the directory and allow user to select a file
     moveIt();
     List(directory);
     Select(id);
     selectFiles();
 
+	//Do something with the cursor (can't be bothered to look what)
     cout << "\x1b[37;1m";
-
+	//Generate the full path of the file to be loaded
     tempName = directory+file;
 
 startofstuff:
@@ -608,7 +628,7 @@ startofstuff:
     // LOAD FILE INTO ARRAY
     lines = createArrayFromFile((char*)tempName.c_str(), numLines);
 
-    // IF NULL THEN FILE COULDN'T BE OPENED SO EXIT
+    // IF NULL THEN FILE COULDN'T BE OPENED SO RESTART
     if (lines == NULL)
     {
         cout << "\nFile could not be opened (for some reason)";
@@ -662,6 +682,7 @@ startofstuff:
             }
 	    while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
         }
+        //User pressed 1 or F12, so return to file selection
         if (WPAD_ButtonsDown(0) & WPAD_BUTTON_1)
         {
             goto first;
@@ -671,6 +692,7 @@ startofstuff:
             goto first;
 	    while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
         }
+        //User pressed 2 or Esc, so return to mainmenu
         if (WPAD_ButtonsDown(0) & WPAD_BUTTON_2)
         {
             directory = "/";
@@ -682,6 +704,7 @@ startofstuff:
             goto veryfirst;
 	    while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
         }
+        //User pressed A or F11 (shortcut in KWrite), so toggle line numbers
         if (WPAD_ButtonsDown(0) & WPAD_BUTTON_A)
         {
             if (!numbers)
@@ -705,6 +728,7 @@ startofstuff:
             longer = displayLines (startLine, 20, lines, numbers, numLines);
 	    while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
         }
+        //User pressed HOME or F4 (comes from Alt+F4), so return to loader
         if (WPAD_ButtonsDown(0) & WPAD_BUTTON_HOME)
         {
             clrscr();
@@ -721,5 +745,6 @@ startofstuff:
 	    while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
         }
     }
+    //Something really weird happened, not even sure if it is possible to get here, but return something or people will start getting edgy...
     return 0;
 }
