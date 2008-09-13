@@ -41,7 +41,7 @@ Go into the root directory of this archive, and type wiiload txt-read.dol. Remem
 
 Wii Homebrew Launcher
 
-Copy the contents of the Homebrew Launcher folder (not the folder itself) onto the root of your SD card. Individual text files to read can go into /emulator/txt-read/roms as long as you load txt-read from the emulators menu.
+Copy the contents of the Homebrew Launcher folder (not the folder itself) onto the root of your SD card. Load by selecting the Homebrew option from the menu.
 
 Twilight Hack
 
