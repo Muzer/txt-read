@@ -627,10 +627,8 @@ veryfirst:
 clrscr();
 
 	//Display the main menu, allow the user to select an option, and once Load a file from SD is selected, wait for 2 seconds...
-cout << "About to detect argument, argc = " << argc << "And argv[0] = " << argv[0];sleep(2);
     if (argc == 2 && argv[1] != "")
     {
-	cout << "Argument detected";sleep(2);
         cout << "It has been detected that you have specified an argument." << endl << "Do you want this to be loaded as your file? Press 1 for yes, 2 for no." << endl << "The argument you specified is: " << argv[1];
         if (LoadArgumentAsFile())//If they said yes
         {
