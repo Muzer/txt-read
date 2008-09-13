@@ -17,6 +17,16 @@ Then many features were added by Muzer
 Then it was released
 Then CraZzy added a file picker, and CraZzy and Muzer are currently working together.
 
+CREDITS
+
+This app was created by Muzer, CraZzy and mattgentl.
+It is currently purely console-based
+Thanks to the creators of all of the standard libs, whoever you are!
+Thanks to Davyg for libwiikeyboard
+Thanks to AlexLH for libwiiupdate
+Thanks to Bool for wiilight example
+I sadly can't remember who created the icon.png (D'oh!) but if you did, please let me know and I'll credit you for the next release.
+
 STEP-BY-STEP
 
 There are many ways to run this app. Once you've run the app, go to the bit marked ***.
@@ -27,11 +37,11 @@ Go into the Homebrew Channel folder in this package, and if you don't already ha
 
 Homebrew Channel - Wiiload
 
-Go into the root directory of this archive, and type wiiload txt-read.dol. Remember, putting a file as the argument is still supported.
+Go into the root directory of this archive, and type wiiload txt-read.dol. Remember, putting a file as the argument is still supported (ie typing wiiload txt-read.dol file.txt (where file.txt is on SD, you can't actual send files from a remote PC)).
 
 Wii Homebrew Launcher
 
-I have not been following this app since the homebrew channel came out, but when I used it, I had to make a Homebrew folder in the SD card, then make a txt-read folder, then copy txt-read.dol into this folder and rename to boot.dol, and make a title.txt with the name, and title.bmp with an image (NOT INCLUDED)
+Copy the contents of the Homebrew Launcher folder (not the folder itself) onto the root of your SD card. Individual text files to read can go into /emulator/txt-read/roms as long as you load txt-read from the emulators menu.
 
 Twilight Hack
 
