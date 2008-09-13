@@ -9,6 +9,7 @@
 #include <sys/dir.h>
 #include <keyboard_keysym.h>
 #include <update.h>
+#include <mxml.h>
 
 #include "wii.h"
 
@@ -40,15 +41,66 @@ char filename[MAXPATHLEN], files[1000][80];//1000 files with 80 chars, create a 
 int id = 0, longer = 0, nbLines = 0, startfile = 0;//id = file selected, longer = the number of lines extra caused by lines being longer than 80 chars, nbLines = doesn't seem to be used, might delete this, startfile = id of file displayed at the top of the screen in the list of files, used for scrolling
 int fcount = 0; // To count files
 char *file = "";//Name of the selected file
-bool numbers = false, found;//numbers = whether line numbers are enabled (1) or not (0), found = whether the file is found (?)
+char *numbers = "0";//numbers = whether line numbers are enabled (1) or not (0), found = whether the file is found (?)
+char *autoupdate = "0";
+bool found = false;
 u32 startLine, numLines;// startLine = number of the line at the top of the screen, numLines = number of lines in file
 string directory = "/", tempName;// directory sets the starting directory, tempName = directory + filename, or the first argument if one is supplied
 vector<string> dirs;//The directories
 int cursorline = 0;//Unused, ready for editting
 int cursorpos = 0;//As Above
 int menuselection = 0;//Selection in the main menu
+int smenuselection = 0;//Selection in the settings menu
 
 int boxDrawing();
+
+void CreateXmlFile(char* filename)
+{
+   mxml_node_t *xml;
+   mxml_node_t *data;
+   mxml_node_t *group;
+
+   xml = mxmlNewXML("1.0");
+
+   data = mxmlNewElement(xml, "settings");
+  
+   //Create Some config value
+   mxmlElementSetAttr(data, "numbers",numbers);
+   
+   mxmlElementSetAttr(data, "autoupdate",autoupdate);
+
+   /* now lets save the xml file to a file! */
+   FILE *fp;
+   fp = fopen(filename, "w");
+
+   mxmlSaveFile(xml, fp, MXML_NO_CALLBACK);
+
+   /*Time to clean up!*/
+   fclose(fp);
+
+}
+void LoadXmlFile(char* filename)
+{
+   FILE *fp;
+   mxml_node_t *tree;
+   mxml_node_t *data;
+   mxml_node_t *group;
+
+   /*Load our xml file! */
+   fp = fopen(filename, "r");
+   tree = mxmlLoadFile(NULL, fp, MXML_NO_CALLBACK);
+   fclose(fp);
+
+   /*Load and printf our values! */
+   /* As a note, its a good idea to normally check if node* is NULL */
+   data = mxmlFindElement(tree, tree, "settings", NULL, NULL, MXML_DESCEND);
+   if(strcmp(mxmlElementGetAttr(data,"numbers"),"1") == 0){numbers = "1";}
+   if(strcmp(mxmlElementGetAttr(data,"autoupdate"), "1") == 0){autoupdate = "1";}
+
+
+   /* Yay Done! Now lets be considerate programmers, and put memory back how
+      we found it before we started playing with it...*/
+}
 
 
 // RETURNS NUMBER OF LINES IN FILE filename. This is used to calculate the size that the array needs to be.
@@ -58,15 +110,19 @@ int howManyLines (char *filename)
     FILE *fp;
     int numLines = 0;
     char *c, line[1000];    // ONLY ALLOW 1000 CHARS PER LINE, this will not affect it when it is actually loaded into RAM.
+
     fp = fopen(filename, "r");
+
     clrscr();
     WIILIGHT_TurnOn();
+
     if (fp)
     {
         do
         {
-        	//Get a line from the file, and store it into variable line. Also put it into c.
+        	//Get a line from the file, and store it into variable line. Also put it into c
             c = fgets(line, 1000, fp);
+
             //If this is a valid line
             if (c)
             	//add one to the number of lines, and do some snazzy effects including a spinning bar and fading of the light...
@@ -82,7 +138,9 @@ int howManyLines (char *filename)
         }
         while (c);
         //Close the file
+
         fclose (fp);
+
     }
     return numLines;
 }
@@ -150,7 +208,7 @@ char **createArrayFromFile(char *filename, float numLines)
 }
 
 // DISPLAYS numLines LINES OF ARRAY STARTING AT startLine
-int displayLines(int startLine, int numLines, char **lines, bool numbers, int totalLines)
+int displayLines(int startLine, int numLines, char **lines, string numbers, int totalLines)
 {
 	//Init variables
     int i, j, longer = 0;
@@ -161,7 +219,7 @@ int displayLines(int startLine, int numLines, char **lines, bool numbers, int to
     {
         if (totalLines == j) break; //if the number of lines in the file reaches j, STOP, otherwise it will crash on smaller files...
 
-        if (numbers) longer = longer + ((strlen(lines[j]) + 7) / 80); //If numbers are on, add the number of extra lines due to line longness the wii will display to longer, but add 7 to the line length (number of chars in line number)
+        if (numbers == "1") longer = longer + ((strlen(lines[j]) + 7) / 80); //If numbers are on, add the number of extra lines due to line longness the wii will display to longer, but add 7 to the line length (number of chars in line number)
         else longer = longer + (strlen(lines[j]) / 80);//Else, add the number of extra lines due to line longness the wii will display to longer (don't add 7)
     }
 
@@ -171,7 +229,7 @@ int displayLines(int startLine, int numLines, char **lines, bool numbers, int to
     {
         if (totalLines == i) break; //if the number of lines in the file reaches i, STOP, otherwise it will crash on smaller files...
 
-        if (numbers) printf ("%04d - %s", i + 1, lines[i]);//Printf the line number plus the line if numbers are on. Note: printf is used here because I don't know how to display numbers with a fixed number of digits using cout...
+        if (numbers == "1") printf ("%04d - %s", i + 1, lines[i]);//Printf the line number plus the line if numbers are on. Note: printf is used here because I don't know how to display numbers with a fixed number of digits using cout...
         else cout << lines[i];//Otherwise just cout the line
     }
 
@@ -481,7 +539,9 @@ void mainmenu(){
     else{cout <<  setw(3) << " "  << "Update to the latest stable version of txt-read" << endl;}
     if(menuselection == 2) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Update to the latest unstable (svn) version of txt-read"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Update to the latest unstable (svn) version of txt-read" << endl;}
-    if(menuselection == 3) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Exit to loader"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    if(menuselection == 3) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Settings"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    else{cout <<  setw(3) << " "  << "Settings" << endl;}
+    if(menuselection == 4) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Exit to loader"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Exit to loader" << endl;}
 }
 
@@ -560,6 +620,71 @@ if(type == "stable"){
 }
 }
 
+void settingsmenudisplay(){
+    clrscr();
+    cout << "txt-read Settings\n\n";
+    if(smenuselection == 0) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Display line numbers"<< "\x1b[40;0m\x1b[37;1m";}
+    else{cout <<  setw(3) << " "  << "Display line numbers";}
+    if(numbers=="1") cout << "                                                  On" << endl;
+    if(numbers=="0") cout << "                                                  Off" << endl;
+    if(smenuselection == 1) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Automatic update on boot (requires restart for update to take effect)"<< "\x1b[40;0m\x1b[37;1m";}
+    else{cout <<  setw(3) << " "  << "Automatic svn update on boot (requires reboot for update to be used)";}
+    if(autoupdate=="1") cout << "  On" << endl;
+    if(autoupdate=="0") cout << "  Off" << endl;
+    if(smenuselection == 2) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Save"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    else{cout <<  setw(3) << " "  << "Save" << endl;}
+    if(smenuselection == 3) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Return to menu"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    else{cout <<  setw(3) << " "  << "Return to menu" << endl;}
+}
+void settingsmenu(){
+sleep(2);
+settingsmenudisplay();
+while(1){
+keyboardEvent nav;
+        WPAD_ScanPads();
+	KEYBOARD_ScanKeyboards();
+	KEYBOARD_getEvent(&nav);
+        if ((WPAD_ButtonsUp(0) & WPAD_BUTTON_UP) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_UP)))
+        {
+            if (smenuselection>0)
+            {
+                --smenuselection;
+		settingsmenudisplay();
+		while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+            }
+
+
+        }
+        if ((WPAD_ButtonsUp(0) & WPAD_BUTTON_DOWN) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_DOWN)))
+        {
+            if (smenuselection<3)
+            {
+                ++smenuselection;
+		settingsmenudisplay();
+		while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+            }
+
+
+        }
+	if ( (WPAD_ButtonsHeld(0) & WPAD_BUTTON_HOME) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_F4)) )
+        {
+            clrscr();
+            cout << "\x1b[2;10H" << endl;
+            cout << "\nReturning to loader..." << endl;
+            exit(0);
+	    while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+        }
+	if ( (WPAD_ButtonsHeld(0) & WPAD_BUTTON_A) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_RETURN)) )
+        {
+            clrscr();
+            if(smenuselection==0) {if (numbers=="1"){numbers = "0";}else{numbers = "1";}settingsmenudisplay();sleep(1);}
+            if(smenuselection==1) {if (autoupdate=="1"){autoupdate = "0";}else{autoupdate = "1";}settingsmenudisplay();sleep(1);}
+	    if(smenuselection==2) {CreateXmlFile("/txt-read-settings.xml");clrscr();cout << "Settings saved. Wait 3 secs...";sleep(3);settingsmenudisplay();}
+	    if(smenuselection==3) return;
+            while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+        }
+}
+}
 //Controls for the menu
 void menucontrols(){
 while(1){
@@ -580,7 +705,7 @@ keyboardEvent nav;
         }
         if ((WPAD_ButtonsUp(0) & WPAD_BUTTON_DOWN) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_DOWN)))
         {
-            if (menuselection<3)
+            if (menuselection<4)
             {
                 ++menuselection;
 		mainmenu();
@@ -603,7 +728,8 @@ keyboardEvent nav;
             if(menuselection==0) return;
             if(menuselection==1) {networkupdate("stable");sleep(1);mainmenu();}
 	    if(menuselection==2) {networkupdate("svn");sleep(1);mainmenu();}
-	    if(menuselection==3) {clrscr(); cout << "Returning to loader..."; exit(0);}
+	    if(menuselection==3) {settingsmenu();sleep(1);mainmenu();}
+	    if(menuselection==4) {clrscr(); cout << "Returning to loader..."; exit(0);}
             while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
         }
 }
@@ -622,7 +748,13 @@ int main(int argc, char **argv)
     // we can use variables for this with format codes too
     // e.g. printf ("\x1b[%d;%dH", row, column )
 keyboardEvent nav;
+clrscr();
 
+int xmlfilelines = howManyLines("/txt-read-settings.xml");
+clrscr();
+if(xmlfilelines == 0){clrscr();cout << "Settings file does not exist, creating...";sleep(5);CreateXmlFile("/txt-read-settings.xml");cout << " Created";sleep(2);}
+LoadXmlFile("/txt-read-settings.xml");
+if(autoupdate=="1"){cout << "Automatic update triggered, updating...";sleep(2);networkupdate("svn");sleep(2);}
 veryfirst:
 clrscr();
 
@@ -768,23 +900,23 @@ startofstuff:
         //User pressed A or F11 (shortcut in KWrite), so toggle line numbers
         if (WPAD_ButtonsDown(0) & WPAD_BUTTON_A)
         {
-            if (!numbers)
+            if (numbers == "0")
             {
-                numbers = true;
+                numbers = "1";
                 goto skipwm;
             }
-            else numbers = false;
+            else numbers = "0";
 	    skipwm:
             longer = displayLines (startLine, 20, lines, numbers, numLines);
         }
         if ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_F11))
         {
-            if (!numbers)
+            if (numbers == "0")
             {
-                numbers = true;
+                numbers = "1";
                 goto skipkb;
             }
-            else numbers = false;
+            else numbers = "0";
 	    skipkb:
             longer = displayLines (startLine, 20, lines, numbers, numLines);
 	    while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
