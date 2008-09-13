@@ -552,10 +552,10 @@ FILE *f;
 s32 main_server;
 if(type == "svn"){
 	WPAD_ScanPads();
-	cout << "Please note: The meta.xml on the SVN version is most likely out of date, and there is no readme. Please wait for the official release to properly learn of the changes. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. All SVN versions SHOULD have all of the previous functions working. Press A..." << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
+	cout << "Please note: The meta.xml on the SVN version is most likely out of date, and there is no readme. Please wait for the official release to properly learn of the changes. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. All SVN versions SHOULD have all of the previous functions working. Press A to continue, or B to quit to menu" << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
 	sleep(2);
 	WPAD_ScanPads();
-	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();}
+	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}
 	load_network();
 	main_server = connect_to_server("74.86.133.219");
 	f = fopen(get_location("boot.dol", "/apps/txt-read"), "wb+");
@@ -589,7 +589,7 @@ if(type == "stable"){
 	cout << "You will shortly update this app to the latest stable version. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. If you wish to have more features, at the possible loss of stability, please choose the SVN option (you can only do this when you get back to the main menu.) Press A..." << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
 	sleep(2);
 	WPAD_ScanPads();
-	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();}
+	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}
 	load_network();
 	main_server = connect_to_server("74.86.133.219");
 	f = fopen(get_location("boot.dol", "/apps/txt-read"), "wb+");
@@ -627,7 +627,7 @@ void settingsmenudisplay(){
     else{cout <<  setw(3) << " "  << "Display line numbers";}
     if(numbers=="1") cout << "                                                  On" << endl;
     if(numbers=="0") cout << "                                                  Off" << endl;
-    if(smenuselection == 1) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Automatic update on boot (requires restart for update to take effect)"<< "\x1b[40;0m\x1b[37;1m";}
+    if(smenuselection == 1) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Automatic svn update on boot (requires reboot for update to be used)"<< "\x1b[40;0m\x1b[37;1m";}
     else{cout <<  setw(3) << " "  << "Automatic svn update on boot (requires reboot for update to be used)";}
     if(autoupdate=="1") cout << "  On" << endl;
     if(autoupdate=="0") cout << "  Off" << endl;
