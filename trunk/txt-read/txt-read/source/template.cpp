@@ -8,8 +8,10 @@
 #include <unistd.h>
 #include <sys/dir.h>
 #include <keyboard_keysym.h>
+#include <update.h>
 
 #include "wii.h"
+
 
 //Some things to keep the code tidy
 #define clrscr()  cout << "\033[2J\033[2;0f"; // Clears screen and moves cursor to row 2, column 0
@@ -486,17 +488,75 @@ void mainmenu(){
 //Placeholder for network update, Come on AlexLH!
 void networkupdate(string type){
 clrscr();
-cout << "Feature not implemented, press A or Enter";
-sleep(1);
-while(1){
-	keyboardEvent nav;
-        WPAD_ScanPads();
-	KEYBOARD_ScanKeyboards();
-	KEYBOARD_getEvent(&nav);
-	if ( (WPAD_ButtonsHeld(0) & WPAD_BUTTON_A) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_RETURN)) )
-        {
-		 return;
-	}
+FILE *f;
+s32 main_server;
+if(type == "svn"){
+	WPAD_ScanPads();
+	cout << "Please note: The meta.xml on the SVN version is most likely out of date, and there is no readme. Please wait for the official release to properly learn of the changes. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. All SVN versions SHOULD have all of the previous functions working. Press A..." << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
+	sleep(2);
+	WPAD_ScanPads();
+	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();}
+	load_network();
+	main_server = connect_to_server("74.86.133.219");
+	f = fopen(get_location("boot.dol", "/apps/txt-read"), "wb+");
+	send_message(main_server, "/svn/boot.dol", "www.muzer.wiibrew.exofire.net");
+	instructions_update();
+	get_file(main_server, f);
+	fclose(f);
+	net_close(main_server);
+	load_network();
+	main_server = connect_to_server("74.86.133.219");
+	f = fopen(get_location("meta.xml", "/apps/txt-read"), "wb+");
+	send_message(main_server, "/stable/meta.xml", "www.muzer.wiibrew.exofire.net");
+	instructions_update();
+	get_file(main_server, f);
+	fclose(f);
+	net_close(main_server);
+	load_network();
+	main_server = connect_to_server("74.86.133.219");
+	f = fopen(get_location("icon.png", "/apps/txt-read"), "wb+");
+	send_message(main_server, "/stable/icon.png", "www.muzer.wiibrew.exofire.net");
+	instructions_update();
+	get_file(main_server, f);
+	fclose(f);
+	net_close(main_server);
+	cout << endl << endl << "*******MESSAGE FROM TXT-READ*******" << endl << endl << "Updating done. Please restart the app to see the changes take effect. Please note that there may or may not have been an update, it will download the latest version regardless. Press A..." << endl << endl << endl;
+	WPAD_ScanPads();
+	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();}
+}
+if(type == "stable"){
+	WPAD_ScanPads();
+	cout << "You will shortly update this app to the latest stable version. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. If you wish to have more features, at the possible loss of stability, please choose the SVN option (you can only do this when you get back to the main menu.) Press A..." << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
+	sleep(2);
+	WPAD_ScanPads();
+	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();}
+	load_network();
+	main_server = connect_to_server("74.86.133.219");
+	f = fopen(get_location("boot.dol", "/apps/txt-read"), "wb+");
+	send_message(main_server, "/stable/boot.dol", "www.muzer.wiibrew.exofire.net");
+	instructions_update();
+	get_file(main_server, f);
+	fclose(f);
+	net_close(main_server);
+	load_network();
+	main_server = connect_to_server("74.86.133.219");
+	f = fopen(get_location("meta.xml", "/apps/txt-read"), "wb+");
+	send_message(main_server, "/stable/meta.xml", "www.muzer.wiibrew.exofire.net");
+	instructions_update();
+	get_file(main_server, f);
+	fclose(f);
+	net_close(main_server);
+	load_network();
+	main_server = connect_to_server("74.86.133.219");
+	f = fopen(get_location("icon.png", "/apps/txt-read"), "wb+");
+	send_message(main_server, "/stable/icon.png", "www.muzer.wiibrew.exofire.net");
+	instructions_update();
+	get_file(main_server, f);
+	fclose(f);
+	net_close(main_server);
+	cout << endl << endl << "*******MESSAGE FROM TXT-READ*******" << endl << endl << "Updating done. Please restart the app to see the changes take effect. Please note that there may or may not have been an update, it will download the latest version regardless. Press A..." << endl << endl;
+	WPAD_ScanPads();
+	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();}
 }
 }
 
@@ -549,6 +609,7 @@ keyboardEvent nav;
 }
 }
 
+
 //Main loop
 //---------------------------------------------------------------------------------
 int main(int argc, char **argv)
@@ -560,21 +621,16 @@ int main(int argc, char **argv)
     // This positions the cursor on row 2, column 0
     // we can use variables for this with format codes too
     // e.g. printf ("\x1b[%d;%dH", row, column )
-
 keyboardEvent nav;
 
 veryfirst:
+clrscr();
 
 	//Display the main menu, allow the user to select an option, and once Load a file from SD is selected, wait for 2 seconds...
-    mainmenu();
-    menucontrols();
-    sleep(2);
-	//Clear the screen, and make the big array
-    clrscr();
-    char **lines;
-	//IF the user specified an argument and that argument is not null (sendelf fix), ask them if they want to load the file they specified
+cout << "About to detect argument, argc = " << argc << "And argv[0] = " << argv[0];sleep(2);
     if (argc == 2 && argv[1] != "")
     {
+	cout << "Argument detected";sleep(2);
         cout << "It has been detected that you have specified an argument." << endl << "Do you want this to be loaded as your file? Press 1 for yes, 2 for no." << endl << "The argument you specified is: " << argv[1];
         if (LoadArgumentAsFile())//If they said yes
         {
@@ -582,6 +638,13 @@ veryfirst:
             goto startofstuff;//And skip to the action
         }
     }
+    mainmenu();
+    menucontrols();
+    sleep(2);
+	//Clear the screen, and make the big array
+    clrscr();
+    char **lines;
+	//IF the user specified an argument and that argument is not null (sendelf fix), ask them if they want to load the file they specified
 
 //Broken code for loading from USB
 /*
