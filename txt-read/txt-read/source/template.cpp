@@ -262,21 +262,14 @@ int List(string &location)
 //Open directory
     struct stat st;
     DIR_ITER* dir;
-
-before:
     id = 0, startfile = 0;
 
     dir = diropen (location.c_str());
 
     if (dir == NULL) //If empty
     {
-        cout << " Empty directory.\nReturning to root.\n";
-        sleep(2);
-        clrscr();
-        moveIt();
-        directory = "/";location = "/";
-        goto before;
-
+        cout << "An error has occured. The cause of this error is unknown, but it used to cause an infinite loop. Returning to loader...";
+	exit(0);
     }
     else
     {
@@ -602,8 +595,8 @@ if(type == "svn"){
 	net_close(main_server);
 	int vsnlines = howManyLines((char *)"version.txt");
 	clrscr();
-	if(vsnlines < 2){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press B to quit, or A if you want to install anyway)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}}
-	if(vsnlines == 2){cout << "You have the latest version (press B to quit, or A if you want to install anyway)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}}
+	if(vsnlines < 3){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press B to quit, or A if you want to install anyway)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}}
+	if(vsnlines == 3){cout << "You have the latest version (press B to quit, or A if you want to install anyway)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}}
 	cout << "There is a newer version available." << endl << endl << "Please note: The meta.xml on the SVN version is most likely out of date, and there is no readme. Please wait for the official release to properly learn of the changes. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. All SVN versions SHOULD have all of the previous functions working. Press A to continue, or B to quit to menu" << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
 	sleep(2);
 	WPAD_ScanPads();
@@ -652,8 +645,8 @@ if(type == "stable"){
 	net_close(main_server);
 	int vsnlines = howManyLines((char *)"version.txt");
 	clrscr();
-	if(vsnlines < 2){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press B to quit, or A if you want to install anyway)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}}	
-	if(vsnlines == 2){cout << "You have the latest version (press B to quit, or A if you want to install anyway)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}}	
+	if(vsnlines < 3){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press B to quit, or A if you want to install anyway)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}}	
+	if(vsnlines == 3){cout << "You have the latest version (press B to quit, or A if you want to install anyway)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}}	
 	WPAD_ScanPads();
 	cout << "You will shortly update this app to the latest stable version. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. If you wish to have more features, at the possible loss of stability, please choose the SVN option (you can only do this when you get back to the main menu.) Press A..." << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
 	sleep(2);
