@@ -270,11 +270,11 @@ before:
 
     if (dir == NULL) //If empty
     {
-        cout << " Unable to open the directory.\nReturning to root.\n";
+        cout << " Empty directory.\nReturning to root.\n";
         sleep(2);
         clrscr();
         moveIt();
-        directory = "/";
+        directory = "/";location = "/";
         goto before;
 
     }
@@ -305,7 +305,7 @@ before:
 void Select(int iSelected)
 {
 int x;
-
+file = files[iSelected];
     boxDrawing();
 
     for (x=startfile; x != startfile + 20; x++)
