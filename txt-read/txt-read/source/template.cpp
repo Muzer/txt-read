@@ -32,6 +32,7 @@ int WIILIGHT_SetLevel(int level);
 
 void WIILIGHT_Toggle();
 void WIILIGHT_TurnOff();
+bool LoadArgumentAsFile();
 
 
 using namespace std;
@@ -65,6 +66,8 @@ void CreateXmlFile(char* filename)
    data = mxmlNewElement(xml, "settings");
   
    //Create Some config value
+   mxmlElementSetAttr(data, "version","1.0");
+
    mxmlElementSetAttr(data, "numbers",numbers);
    
    mxmlElementSetAttr(data, "autoupdate",autoupdate);
@@ -94,6 +97,7 @@ void LoadXmlFile(char* filename)
    /*Load and printf our values! */
    /* As a note, its a good idea to normally check if node* is NULL */
    data = mxmlFindElement(tree, tree, "settings", NULL, NULL, MXML_DESCEND);
+   if(strcmp(mxmlElementGetAttr(data,"version"),"1.0") != 0){cout << "You have an old version of the settings file. You may use it, but unexpected things such as crashes may happen, so it is best if you update it. Unless you update it manually, this will override your settings. Do you wish to update it? (1 = yes, 2 = no)";if(LoadArgumentAsFile() == 1){CreateXmlFile("/txt-read-settings.xml");return;}}
    if(strcmp(mxmlElementGetAttr(data,"numbers"),"1") == 0){numbers = "1";}
    if(strcmp(mxmlElementGetAttr(data,"autoupdate"), "1") == 0){autoupdate = "1";}
 
@@ -552,7 +556,23 @@ FILE *f;
 s32 main_server;
 if(type == "svn"){
 	WPAD_ScanPads();
-	cout << "Please note: The meta.xml on the SVN version is most likely out of date, and there is no readme. Please wait for the official release to properly learn of the changes. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. All SVN versions SHOULD have all of the previous functions working. Press A to continue, or B to quit to menu" << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
+	cout << "About to check for updates, press A to continue or B to quit.";
+	sleep(2);
+	WPAD_ScanPads();
+	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}
+	load_network();
+	main_server = connect_to_server("74.86.133.219");
+	f = fopen(get_location("version.txt", "/"), "wb+");
+	send_message(main_server, "/svn/version.txt", "www.muzer.wiibrew.exofire.net");
+	instructions_update();
+	get_file(main_server, f);
+	fclose(f);
+	net_close(main_server);
+	int vsnlines = howManyLines("version.txt");
+	clrscr();
+	if(vsnlines < 2){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press A...)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}return;}
+	if(vsnlines == 2){cout << "You have the latest version (press A...)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}return;}
+	cout << "There is a newer version available." << endl << endl << "Please note: The meta.xml on the SVN version is most likely out of date, and there is no readme. Please wait for the official release to properly learn of the changes. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. All SVN versions SHOULD have all of the previous functions working. Press A to continue, or B to quit to menu" << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
 	sleep(2);
 	WPAD_ScanPads();
 	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}
@@ -585,6 +605,23 @@ if(type == "svn"){
 	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();}
 }
 if(type == "stable"){
+	WPAD_ScanPads();
+	cout << "About to check for updates, press A to continue or B to quit.";
+	sleep(2);
+	WPAD_ScanPads();
+	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}
+	load_network();
+	main_server = connect_to_server("74.86.133.219");
+	f = fopen(get_location("version.txt", "/"), "wb+");
+	send_message(main_server, "/stable/version.txt", "www.muzer.wiibrew.exofire.net");
+	instructions_update();
+	get_file(main_server, f);
+	fclose(f);
+	net_close(main_server);
+	int vsnlines = howManyLines("version.txt");
+	clrscr();
+	if(vsnlines < 2){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press A...)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}return;}
+	if(vsnlines == 2){cout << "You have the latest version (press A...)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}return;}
 	WPAD_ScanPads();
 	cout << "You will shortly update this app to the latest stable version. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. If you wish to have more features, at the possible loss of stability, please choose the SVN option (you can only do this when you get back to the main menu.) Press A..." << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
 	sleep(2);
