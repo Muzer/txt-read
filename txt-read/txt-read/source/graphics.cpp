@@ -1,10 +1,9 @@
 #include "wii.h"
 #include <iostream>
 
-
 using namespace std;
 
-int boxDrawing()
+void boxDrawing(void)
 {
     char horiz_eq = 205;
     char horiz_eq_to_vert_tl = 213;

@@ -13,18 +13,13 @@
 
 #include "wii.h"
 
-
 //Some things to keep the code tidy
 #define clrscr()  cout << "\033[2J\033[2;0f"; // Clears screen and moves cursor to row 2, column 0
 #define delay()   sleep(1); // waits for one second
 #define moveIt()  cout << "\x1b[5;5H" << endl; // Moves cursor to row 5, column 0
 
-
-
 //Some stuff for the wii's disc slot light
 void _wiilight_turn(int enable);
-static void * _wiilight_loop(void *arg);
-static vu32 *_wiilight_reg = (u32*)0xCD0000C0;
 
 void WIILIGHT_TurnOn();
 int WIILIGHT_GetLevel();
@@ -34,18 +29,17 @@ void WIILIGHT_Toggle();
 void WIILIGHT_TurnOff();
 bool LoadArgumentAsFile();
 
-
 using namespace std;
 
 //Variables
 char filename[MAXPATHLEN], files[1000][80];//1000 files with 80 chars, create a char array for storing the filenames
 int id = 0, longer = 0, nbLines = 0, startfile = 0;//id = file selected, longer = the number of lines extra caused by lines being longer than 80 chars, nbLines = doesn't seem to be used, might delete this, startfile = id of file displayed at the top of the screen in the list of files, used for scrolling
 int fcount = 0; // To count files
-char *file = "";//Name of the selected file
-char *numbers = "0";//numbers = whether line numbers are enabled (1) or not (0), found = whether the file is found (?)
-char *autoupdate = "0";
+char *file;//Name of the selected file
+int numbers = 0;//numbers = whether line numbers are enabled (1) or not (0), found = whether the file is found (?)
+int autoupdate = 0;
 bool found = false;
-u32 startLine, numLines;// startLine = number of the line at the top of the screen, numLines = number of lines in file
+int startLine, numLines;// startLine = number of the line at the top of the screen, numLines = number of lines in file
 string directory = "/", tempName;// directory sets the starting directory, tempName = directory + filename, or the first argument if one is supplied
 vector<string> dirs;//The directories
 int cursorline = 0;//Unused, ready for editting
@@ -55,11 +49,12 @@ int smenuselection = 0;//Selection in the settings menu
 
 int boxDrawing();
 
-void CreateXmlFile(char* filename)
+void CreateXmlFile(char *filename)
 {
-   mxml_node_t *xml;
-   mxml_node_t *data;
-   mxml_node_t *group;
+mxml_node_t *xml;
+mxml_node_t *data;
+char temp[1+1];
+FILE *fp;
 
    xml = mxmlNewXML("1.0");
 
@@ -67,13 +62,12 @@ void CreateXmlFile(char* filename)
   
    //Create Some config value
    mxmlElementSetAttr(data, "version","1.0");
-
-   mxmlElementSetAttr(data, "numbers",numbers);
-   
-   mxmlElementSetAttr(data, "autoupdate",autoupdate);
+   sprintf(temp, "%d", numbers);
+   mxmlElementSetAttr(data, "numbers", temp);
+   sprintf(temp, "%d", autoupdate);
+   mxmlElementSetAttr(data, "autoupdate", temp);
 
    /* now lets save the xml file to a file! */
-   FILE *fp;
    fp = fopen(filename, "w");
 
    mxmlSaveFile(xml, fp, MXML_NO_CALLBACK);
@@ -82,25 +76,34 @@ void CreateXmlFile(char* filename)
    fclose(fp);
 
 }
-void LoadXmlFile(char* filename)
+void LoadXmlFile(char *filename)
 {
-   FILE *fp;
-   mxml_node_t *tree;
-   mxml_node_t *data;
-   mxml_node_t *group;
+FILE *fp;
+mxml_node_t *tree;
+mxml_node_t *data;
 
-   /*Load our xml file! */
-   fp = fopen(filename, "r");
-   tree = mxmlLoadFile(NULL, fp, MXML_NO_CALLBACK);
-   fclose(fp);
+   	/*Load our xml file! */
+   	fp = fopen(filename, "r");
+   	tree = mxmlLoadFile(NULL, fp, MXML_NO_CALLBACK);
+   	fclose(fp);
 
-   /*Load and printf our values! */
-   /* As a note, its a good idea to normally check if node* is NULL */
-   data = mxmlFindElement(tree, tree, "settings", NULL, NULL, MXML_DESCEND);
-   if(strcmp(mxmlElementGetAttr(data,"version"),"1.0") != 0){cout << "You have an old version of the settings file. You may use it, but unexpected things such as crashes may happen, so it is best if you update it. Unless you update it manually, this will override your settings. Do you wish to update it? (1 = yes, 2 = no)";if(LoadArgumentAsFile() == 1){CreateXmlFile("/txt-read-settings.xml");return;}}
-   if(strcmp(mxmlElementGetAttr(data,"numbers"),"1") == 0){numbers = "1";}
-   if(strcmp(mxmlElementGetAttr(data,"autoupdate"), "1") == 0){autoupdate = "1";}
+   	/*Load and printf our values! */
+   	/* As a note, its a good idea to normally check if node* is NULL */
+   	data = mxmlFindElement(tree, tree, "settings", NULL, NULL, MXML_DESCEND);
+   	if (strcmp(mxmlElementGetAttr(data, "version"), "1.0") != 0)
+   	{
+   		cout << "You have an old version of the settings file. You may use it, but unexpected things such as crashes may happen, so it is best if you update it. Unless you update it manually, this will override your settings. Do you wish to update it? (1 = yes, 2 = no)";
+   		if (LoadArgumentAsFile() == 1)
+   		{
+   			CreateXmlFile((char *)"/txt-read-settings.xml");
+   			return;
+   		}
+   	}
+   	if (strcmp(mxmlElementGetAttr(data,"numbers"), "1") == 0)
+   		numbers = 1;
 
+   	if (strcmp(mxmlElementGetAttr(data,"autoupdate"), "1") == 0)
+		autoupdate = 1;
 
    /* Yay Done! Now lets be considerate programmers, and put memory back how
       we found it before we started playing with it...*/
@@ -110,11 +113,12 @@ void LoadXmlFile(char* filename)
 // RETURNS NUMBER OF LINES IN FILE filename. This is used to calculate the size that the array needs to be.
 int howManyLines (char *filename)
 {
-	//Init variables and open the file, also init the wiilight and clear the screen.
-    FILE *fp;
-    int numLines = 0;
-    char *c, line[1000];    // ONLY ALLOW 1000 CHARS PER LINE, this will not affect it when it is actually loaded into RAM.
+//Init variables and open the file, also init the wiilight and clear the screen.
+FILE *fp;
+int numLines;
+char *c, line[1000];    // ONLY ALLOW 1000 CHARS PER LINE, this will not affect it when it is actually loaded into RAM.
 
+	numLines = 0;
     fp = fopen(filename, "r");
 
     clrscr();
@@ -129,22 +133,30 @@ int howManyLines (char *filename)
 
             //If this is a valid line
             if (c)
+            {
             	//add one to the number of lines, and do some snazzy effects including a spinning bar and fading of the light...
                 numLines++;
-            cout << "\033[2;0f";
-            cout << "Counting number of lines.\nPlease wait. ";
-            if (numLines % 80 < 20) cout << "|";
-            if (numLines % 80 > 19 & numLines % 80 < 40) cout << "/";
-            if (numLines % 80 > 39 & numLines % 80 < 60) cout << "-";
-            if (numLines % 80 > 59) cout << "\\";
-	    WIILIGHT_SetLevel(numLines % 256);
-	    
-        }
-        while (c);
+
+            	cout << "\033[2;0f";
+            	cout << "Counting number of lines.\nPlease wait. ";
+            	if ((numLines % 80) < 20) 
+            		cout << "|";
+            
+            	if (((numLines % 80) > 19) && ((numLines % 80) < 40))
+            		 cout << "/";
+            
+            	if (((numLines % 80) > 39) && ((numLines % 80) < 60))
+            		 cout << "-";
+            		 
+            	if ((numLines % 80) > 59) 
+            		cout << "\\";
+
+		    	WIILIGHT_SetLevel(numLines % 256);    
+		    }
+        } while (c);
+        
         //Close the file
-
         fclose (fp);
-
     }
     return numLines;
 }
@@ -212,29 +224,30 @@ char **createArrayFromFile(char *filename, float numLines)
 }
 
 // DISPLAYS numLines LINES OF ARRAY STARTING AT startLine
-int displayLines(int startLine, int numLines, char **lines, string numbers, int totalLines)
+int displayLines(int startLine, int numLines, char **lines, int numbers, int totalLines)
 {
 	//Init variables
     int i, j, longer = 0;
-    char vert_bar = 179;
-    string display_str = "";
     
     for (j = startLine - 1; j < numLines + startLine - 1 - longer; j++)
     {
         if (totalLines == j) break; //if the number of lines in the file reaches j, STOP, otherwise it will crash on smaller files...
 
-        if (numbers == "1") longer = longer + ((strlen(lines[j]) + 7) / 80); //If numbers are on, add the number of extra lines due to line longness the wii will display to longer, but add 7 to the line length (number of chars in line number)
-        else longer = longer + (strlen(lines[j]) / 80);//Else, add the number of extra lines due to line longness the wii will display to longer (don't add 7)
+        if (numbers == 1) 
+        	longer = longer + ((strlen(lines[j]) + 7) / 80); //If numbers are on, add the number of extra lines due to line longness the wii will display to longer, but add 7 to the line length (number of chars in line number)
+        else 
+        	longer = longer + (strlen(lines[j]) / 80);//Else, add the number of extra lines due to line longness the wii will display to longer (don't add 7)
     }
-
 
     clrscr();
     for (i = startLine - 1; i < numLines + startLine - 1 - longer; i++)
     {
         if (totalLines == i) break; //if the number of lines in the file reaches i, STOP, otherwise it will crash on smaller files...
 
-        if (numbers == "1") printf ("%04d - %s", i + 1, lines[i]);//Printf the line number plus the line if numbers are on. Note: printf is used here because I don't know how to display numbers with a fixed number of digits using cout...
-        else cout << lines[i];//Otherwise just cout the line
+        if (numbers == 1) 
+        	printf ("%04d - %s", i + 1, lines[i]);//Printf the line number plus the line if numbers are on. Note: printf is used here because I don't know how to display numbers with a fixed number of digits using cout...
+        else 
+        	cout << lines[i];//Otherwise just cout the line
     }
 
     return longer;
@@ -271,7 +284,7 @@ before:
         {
 
 
-            if ((st.st_mode & S_IFDIR ? "DIR":"FILE")=="FILE")// IF IT'S FILE
+            if (strcmp((st.st_mode & S_IFDIR ? "DIR" : "FILE"), "FILE") == 0)// IF IT'S FILE
             {
                 strcpy(files[fcount], filename);
                 ++fcount;
@@ -286,43 +299,39 @@ before:
     }
 
     return 0;
-
 }
 
 //List directory
 void Select(int iSelected)
 {
-    int x;
+int x;
 
     boxDrawing();
 
-    for (x=startfile;x!=startfile + 20;x++)
+    for (x=startfile; x != startfile + 20; x++)
     {
-        if (x==fcount) return; //this needed if things in current dir < 20
+        if ( x== fcount) 
+        	return; //this needed if things in current dir < 20
 
-        if (x==iSelected)
-        {
+        if (x == iSelected)
             cout << ">> " << "\x1b[47;1m\x1b[30m" << files[x]<< "\x1b[40;0m\x1b[37;1m" << endl;
-
-        }
         else
-        {
             cout <<  setw(3) << " "  << files[x] << endl;
-        }
     }
-
 }
 
 
 //Controls for file selection...
 int selectFiles()
 {
+int n;
+
     while (1)
     {
-keyboardEvent nav;
+		keyboardEvent nav;
         WPAD_ScanPads();
-	KEYBOARD_ScanKeyboards();
-	KEYBOARD_getEvent(&nav);
+		KEYBOARD_ScanKeyboards();
+		KEYBOARD_getEvent(&nav);
         if ((WPAD_ButtonsUp(0) & WPAD_BUTTON_UP) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_UP)))
         {
             if (id>=1)
@@ -333,77 +342,98 @@ keyboardEvent nav;
                 if (id<startfile) --startfile;
                 file = files[id];
                 Select(id);
-		while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+				while (nav.type == KEYBOARD_PRESSED)
+				{
+					KEYBOARD_ScanKeyboards();
+					KEYBOARD_getEvent(&nav);
+				}
             }
-
-
         }
 
         if ((WPAD_ButtonsUp(0) & WPAD_BUTTON_RIGHT) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_RIGHT)))
         {
-            if (id+1<fcount-5)
+            if (id+1 < fcount-5)
             {
-
                 clrscr();
                 moveIt();
                 id += 5;
-                if (id>startfile+19) startfile=id-19;
+                if (id > startfile+19) 
+                	startfile = id-19;
                 file = files[id];
                 Select(id);
-		while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+				while (nav.type == KEYBOARD_PRESSED)
+				{
+					KEYBOARD_ScanKeyboards();
+					KEYBOARD_getEvent(&nav);
+				}
             }
             else
             {
                 clrscr();
                 moveIt();
                 id += (fcount-id)-1;
-                if (id>startfile+19) startfile=id-19;
+                if (id > startfile+19) 
+                	startfile=id-19;
                 file = files[id];
                 Select(id);
-		while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
-
+				while (nav.type == KEYBOARD_PRESSED)
+				{
+					KEYBOARD_ScanKeyboards();
+					KEYBOARD_getEvent(&nav);
+				}
             }
-
-
         }
 
         if ((WPAD_ButtonsUp(0) & WPAD_BUTTON_LEFT) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_LEFT)))
         {
-            if (id>=5)
+            if (id >= 5)
             {
-
                 clrscr();
                 moveIt();
                 id -= 5;
-                if (id<startfile) startfile=id;
+                if (id < startfile) 
+                	startfile=id;
                 file = files[id];
                 Select(id);
-		while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+				while (nav.type == KEYBOARD_PRESSED)
+				{
+					KEYBOARD_ScanKeyboards();
+					KEYBOARD_getEvent(&nav);
+				}
             }
             else
             {
                 clrscr();
                 moveIt();
                 id -= id;
-                if (id<startfile) startfile=id;
+                if (id < startfile) 
+                	startfile=id;
                 file = files[id];
                 Select(id);
-		while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+				while (nav.type == KEYBOARD_PRESSED)
+				{
+					KEYBOARD_ScanKeyboards();
+					KEYBOARD_getEvent(&nav);
+				}
             }
-
         }
 
         if ((WPAD_ButtonsUp(0) & WPAD_BUTTON_DOWN) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_DOWN)))
         {
-            if (id+1<fcount)
+            if (id+1 < fcount)
             {
                 clrscr();
                 moveIt();
                 ++id;
-                if (id>startfile+19) ++startfile;
+                if (id>startfile+19) 
+                	++startfile;
                 file = files[id];
                 Select(id);
-		while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+				while (nav.type == KEYBOARD_PRESSED)
+				{
+					KEYBOARD_ScanKeyboards();
+					KEYBOARD_getEvent(&nav);
+				}
             }
         }
 
@@ -411,9 +441,9 @@ keyboardEvent nav;
         {
             //open file and load in memory
             found = false;
-            if (file != "." || file != "..")
+            if ((strcmp(file, ".") != 0) || (strcmp(file, "..") != 0))
             {
-                for (int n = 0; n < dirs.size();n++)
+                for (n = 0; n < (int)dirs.size(); n++)
                 {
                     if (file == dirs[n])
                     {
@@ -422,9 +452,10 @@ keyboardEvent nav;
                     }
                 }
             }
-            foundYet:
-            string namefile = file;
-            if (namefile == ".")
+
+foundYet:
+            
+            if (strcmp(file, ".") == 0)
             {
                 clrscr();
                 moveIt();
@@ -434,7 +465,7 @@ keyboardEvent nav;
                 Select(id);
                 selectFiles();
             }
-            else if (namefile == "..")
+            else if (strcmp (file, "..") == 0)
             {
                 directory = directory.substr(0, directory.size()-1);
                 directory = directory.substr(0, directory.rfind("/")+1);
@@ -456,26 +487,27 @@ keyboardEvent nav;
                 usleep(150000);
                 clrscr();
                 moveIt();
-                char *slash = "/";
-                strcat(file, slash);
+                strcat(file, "/");
                 directory += file;
                 dirs.resize(0);
-
-
                 List(directory);
                 Select(id);
                 selectFiles();
             }
-	    while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+	    	while (nav.type == KEYBOARD_PRESSED)
+	    	{
+	    		KEYBOARD_ScanKeyboards();
+	    		KEYBOARD_getEvent(&nav);
+	    	}
             return 0;
         }
-        if ( (WPAD_ButtonsHeld(0) & WPAD_BUTTON_HOME) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_F4)) )
+        
+        if ((WPAD_ButtonsHeld(0) & WPAD_BUTTON_HOME) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_F4)) )
         {
             clrscr();
             cout << "\x1b[2;10H" << endl;
             cout << "\nReturning to loader..." << endl;
             exit(0);
-	    while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
         }
     }
 
@@ -561,41 +593,41 @@ if(type == "svn"){
 	WPAD_ScanPads();
 	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}
 	load_network();
-	main_server = connect_to_server("74.86.133.219");
-	f = fopen(get_location("version.txt", "/"), "wb+");
-	send_message(main_server, "/svn/version.txt", "www.muzer.wiibrew.exofire.net");
+	main_server = connect_to_server((char*)"74.86.133.219");
+	f = fopen(get_location((char*)"version.txt", (char*)"/"), "wb+");
+	send_message(main_server, (char*)"/svn/version.txt", (char*)"www.muzer.wiibrew.exofire.net");
 	instructions_update();
 	get_file(main_server, f);
 	fclose(f);
 	net_close(main_server);
-	int vsnlines = howManyLines("version.txt");
+	int vsnlines = howManyLines((char *)"version.txt");
 	clrscr();
-	if(vsnlines < 2){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press A...)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}return;}
-	if(vsnlines == 2){cout << "You have the latest version (press A...)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}return;}
+	if(vsnlines < 2){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press B to quit, or A if you want to install anyway)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}}
+	if(vsnlines == 2){cout << "You have the latest version (press B to quit, or A if you want to install anyway)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}}
 	cout << "There is a newer version available." << endl << endl << "Please note: The meta.xml on the SVN version is most likely out of date, and there is no readme. Please wait for the official release to properly learn of the changes. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. All SVN versions SHOULD have all of the previous functions working. Press A to continue, or B to quit to menu" << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
 	sleep(2);
 	WPAD_ScanPads();
 	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}
 	load_network();
-	main_server = connect_to_server("74.86.133.219");
-	f = fopen(get_location("boot.dol", "/apps/txt-read"), "wb+");
-	send_message(main_server, "/svn/boot.dol", "www.muzer.wiibrew.exofire.net");
+	main_server = connect_to_server((char*)"74.86.133.219");
+	f = fopen(get_location((char*)"boot.dol", (char*)"/apps/txt-read"), "wb+");
+	send_message(main_server, (char*)"/svn/boot.dol", (char*)"www.muzer.wiibrew.exofire.net");
 	instructions_update();
 	get_file(main_server, f);
 	fclose(f);
 	net_close(main_server);
 	load_network();
-	main_server = connect_to_server("74.86.133.219");
-	f = fopen(get_location("meta.xml", "/apps/txt-read"), "wb+");
-	send_message(main_server, "/stable/meta.xml", "www.muzer.wiibrew.exofire.net");
+	main_server = connect_to_server((char*)"74.86.133.219");
+	f = fopen(get_location((char*)"meta.xml", (char*)"/apps/txt-read"), "wb+");
+	send_message(main_server, (char*)"/stable/meta.xml", (char*)"www.muzer.wiibrew.exofire.net");
 	instructions_update();
 	get_file(main_server, f);
 	fclose(f);
 	net_close(main_server);
 	load_network();
-	main_server = connect_to_server("74.86.133.219");
-	f = fopen(get_location("icon.png", "/apps/txt-read"), "wb+");
-	send_message(main_server, "/stable/icon.png", "www.muzer.wiibrew.exofire.net");
+	main_server = connect_to_server((char*)"74.86.133.219");
+	f = fopen(get_location((char*)"icon.png", (char*)"/apps/txt-read"), "wb+");
+	send_message(main_server, (char*)"/stable/icon.png", (char*)"www.muzer.wiibrew.exofire.net");
 	instructions_update();
 	get_file(main_server, f);
 	fclose(f);
@@ -611,42 +643,42 @@ if(type == "stable"){
 	WPAD_ScanPads();
 	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}
 	load_network();
-	main_server = connect_to_server("74.86.133.219");
-	f = fopen(get_location("version.txt", "/"), "wb+");
-	send_message(main_server, "/stable/version.txt", "www.muzer.wiibrew.exofire.net");
+	main_server = connect_to_server((char *)"74.86.133.219");
+	f = fopen(get_location((char*)"version.txt", (char*)"/"), "wb+");
+	send_message(main_server, (char *)"/stable/version.txt", (char *)"www.muzer.wiibrew.exofire.net");
 	instructions_update();
 	get_file(main_server, f);
 	fclose(f);
 	net_close(main_server);
-	int vsnlines = howManyLines("version.txt");
+	int vsnlines = howManyLines((char *)"version.txt");
 	clrscr();
-	if(vsnlines < 2){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press A...)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}return;}
-	if(vsnlines == 2){cout << "You have the latest version (press A...)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}return;}
+	if(vsnlines < 2){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press B to quit, or A if you want to install anyway)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}}	
+	if(vsnlines == 2){cout << "You have the latest version (press B to quit, or A if you want to install anyway)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}}	
 	WPAD_ScanPads();
 	cout << "You will shortly update this app to the latest stable version. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. If you wish to have more features, at the possible loss of stability, please choose the SVN option (you can only do this when you get back to the main menu.) Press A..." << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
 	sleep(2);
 	WPAD_ScanPads();
 	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}
 	load_network();
-	main_server = connect_to_server("74.86.133.219");
-	f = fopen(get_location("boot.dol", "/apps/txt-read"), "wb+");
-	send_message(main_server, "/stable/boot.dol", "www.muzer.wiibrew.exofire.net");
+	main_server = connect_to_server((char*)"74.86.133.219");
+	f = fopen(get_location((char*)"boot.dol", (char*)"/apps/txt-read"), "wb+");
+	send_message(main_server, (char*)"/stable/boot.dol", (char*)"www.muzer.wiibrew.exofire.net");
 	instructions_update();
 	get_file(main_server, f);
 	fclose(f);
 	net_close(main_server);
 	load_network();
-	main_server = connect_to_server("74.86.133.219");
-	f = fopen(get_location("meta.xml", "/apps/txt-read"), "wb+");
-	send_message(main_server, "/stable/meta.xml", "www.muzer.wiibrew.exofire.net");
+	main_server = connect_to_server((char*)"74.86.133.219");
+	f = fopen(get_location((char*)"meta.xml", (char*)"/apps/txt-read"), "wb+");
+	send_message(main_server, (char*)"/stable/meta.xml", (char*)"www.muzer.wiibrew.exofire.net");
 	instructions_update();
 	get_file(main_server, f);
 	fclose(f);
 	net_close(main_server);
 	load_network();
-	main_server = connect_to_server("74.86.133.219");
-	f = fopen(get_location("icon.png", "/apps/txt-read"), "wb+");
-	send_message(main_server, "/stable/icon.png", "www.muzer.wiibrew.exofire.net");
+	main_server = connect_to_server((char*)"74.86.133.219");
+	f = fopen(get_location((char*)"icon.png", (char*)"/apps/txt-read"), "wb+");
+	send_message(main_server, (char*)"/stable/icon.png", (char*)"www.muzer.wiibrew.exofire.net");
 	instructions_update();
 	get_file(main_server, f);
 	fclose(f);
@@ -657,21 +689,41 @@ if(type == "stable"){
 }
 }
 
-void settingsmenudisplay(){
+void settingsmenudisplay()
+{
     clrscr();
     cout << "txt-read Settings\n\n";
-    if(smenuselection == 0) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Display line numbers"<< "\x1b[40;0m\x1b[37;1m";}
-    else{cout <<  setw(3) << " "  << "Display line numbers";}
-    if(numbers=="1") cout << "                                                  On" << endl;
-    if(numbers=="0") cout << "                                                  Off" << endl;
-    if(smenuselection == 1) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Automatic svn update on boot (requires reboot for update to be used)"<< "\x1b[40;0m\x1b[37;1m";}
-    else{cout <<  setw(3) << " "  << "Automatic svn update on boot (requires reboot for update to be used)";}
-    if(autoupdate=="1") cout << "  On" << endl;
-    if(autoupdate=="0") cout << "  Off" << endl;
-    if(smenuselection == 2) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Save"<< "\x1b[40;0m\x1b[37;1m" << endl;}
-    else{cout <<  setw(3) << " "  << "Save" << endl;}
-    if(smenuselection == 3) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Return to menu"<< "\x1b[40;0m\x1b[37;1m" << endl;}
-    else{cout <<  setw(3) << " "  << "Return to menu" << endl;}
+    if (smenuselection == 0) 
+    	cout << ">> " << "\x1b[47;1m\x1b[30m" << "Display line numbers"<< "\x1b[40;0m\x1b[37;1m";
+    else
+    	cout <<  setw(3) << " "  << "Display line numbers";
+    	
+    if (numbers == 1)
+    	cout << "                                                  On" << endl;
+    
+    if (numbers == 0) 
+    	cout << "                                                  Off" << endl;
+    
+    if (smenuselection == 1) 
+    	cout << ">> " << "\x1b[47;1m\x1b[30m" << "Automatic svn update on boot (requires reboot for update to be used)"<< "\x1b[40;0m\x1b[37;1m";
+    else
+    	cout <<  setw(3) << " "  << "Automatic svn update on boot (requires reboot for update to be used)";
+    
+    if (autoupdate == 1)
+    	cout << "  On" << endl;
+    
+    if (autoupdate == 0) 
+    	cout << "  Off" << endl;
+    
+    if (smenuselection == 2)
+    	cout << ">> " << "\x1b[47;1m\x1b[30m" << "Save"<< "\x1b[40;0m\x1b[37;1m" << endl;
+    else
+    	cout <<  setw(3) << " "  << "Save" << endl;
+    	
+    if (smenuselection == 3) 
+    	cout << ">> " << "\x1b[47;1m\x1b[30m" << "Return to menu"<< "\x1b[40;0m\x1b[37;1m" << endl;    	
+    else
+    	cout <<  setw(3) << " "  << "Return to menu" << endl;
 }
 void settingsmenu(){
 sleep(2);
@@ -714,11 +766,41 @@ keyboardEvent nav;
 	if ( (WPAD_ButtonsHeld(0) & WPAD_BUTTON_A) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_RETURN)) )
         {
             clrscr();
-            if(smenuselection==0) {if (numbers=="1"){numbers = "0";}else{numbers = "1";}settingsmenudisplay();sleep(1);}
-            if(smenuselection==1) {if (autoupdate=="1"){autoupdate = "0";}else{autoupdate = "1";}settingsmenudisplay();sleep(1);}
-	    if(smenuselection==2) {CreateXmlFile("/txt-read-settings.xml");clrscr();cout << "Settings saved. Wait 3 secs...";sleep(3);settingsmenudisplay();}
-	    if(smenuselection==3) return;
-            while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+            if(smenuselection == 0) 
+            {
+            	if (numbers == 1)
+            		numbers = 0;
+            	else
+            		numbers = 1;
+            	settingsmenudisplay();
+            	sleep(1);
+            }
+            
+            if(smenuselection == 1)
+            {
+            	if (autoupdate == 1)
+            		autoupdate = 0;
+            	else
+            		autoupdate = 1;
+            	settingsmenudisplay();
+            	sleep(1);
+            }
+	    	if (smenuselection == 2) 
+	    	{
+	    		CreateXmlFile((char *)"/txt-read-settings.xml");
+	    		clrscr();
+	    		cout << "Settings saved. Wait 3 secs...";
+	    		sleep(3);
+	    		settingsmenudisplay();
+	    	}
+	    	if (smenuselection == 3) 
+	    		return;
+            
+            while(nav.type == KEYBOARD_PRESSED)
+            {
+            	KEYBOARD_ScanKeyboards();
+            	KEYBOARD_getEvent(&nav);
+            }
         }
 }
 }
@@ -774,29 +856,47 @@ keyboardEvent nav;
 
 
 //Main loop
-//---------------------------------------------------------------------------------
 int main(int argc, char **argv)
 {
-//---------------------------------------------------------------------------------
+char **lines;
+keyboardEvent nav;
+int xmlfilelines, longer;
+
     // Init sets up the environment
-    init();
+	init();
     // The console understands VT terminal escape codes
     // This positions the cursor on row 2, column 0
     // we can use variables for this with format codes too
     // e.g. printf ("\x1b[%d;%dH", row, column )
-keyboardEvent nav;
-clrscr();
+	clrscr();
 
-int xmlfilelines = howManyLines("/txt-read-settings.xml");
-clrscr();
-if(xmlfilelines == 0){clrscr();cout << "Settings file does not exist, creating...";sleep(5);CreateXmlFile("/txt-read-settings.xml");cout << " Created";sleep(2);}
-LoadXmlFile("/txt-read-settings.xml");
-if(autoupdate=="1"){cout << "Automatic update triggered, updating...";sleep(2);networkupdate("svn");sleep(2);}
+	xmlfilelines = howManyLines((char *)"/txt-read-settings.xml");
+	clrscr();
+	if (xmlfilelines == 0)
+	{
+		clrscr();
+		cout << "Settings file does not exist, creating...";
+		sleep(5);
+		CreateXmlFile((char *)"/txt-read-settings.xml");
+		cout << " Created";
+		sleep(2);
+	}
+
+	LoadXmlFile((char *)"/txt-read-settings.xml");
+	if (autoupdate == 1)
+	{
+		cout << "Automatic update triggered, updating...";
+		sleep(2);
+		networkupdate("svn");
+		sleep(2);
+	}
+
 veryfirst:
-clrscr();
+	
+	clrscr();
 
 	//Display the main menu, allow the user to select an option, and once Load a file from SD is selected, wait for 2 seconds...
-    if (argc == 2 && argv[1] != "")
+    if (argc == 2 && strcmp(argv[1], "") != 0)
     {
         cout << "It has been detected that you have specified an argument." << endl << "Do you want this to be loaded as your file? Press 1 for yes, 2 for no." << endl << "The argument you specified is: " << argv[1];
         if (LoadArgumentAsFile())//If they said yes
@@ -808,9 +908,10 @@ clrscr();
     mainmenu();
     menucontrols();
     sleep(2);
+	
 	//Clear the screen, and make the big array
     clrscr();
-    char **lines;
+    
 	//IF the user specified an argument and that argument is not null (sendelf fix), ask them if they want to load the file they specified
 
 //Broken code for loading from USB
@@ -868,12 +969,13 @@ startofstuff:
 
     // DISPLAY LINES 1-20
     startLine = 1;
-    int longer = displayLines(startLine, 20, lines, numbers, numLines);
+    longer = displayLines(startLine, 20, lines, numbers, numLines);
+    
     while (1)
     {
         WPAD_ScanPads();
-	KEYBOARD_ScanKeyboards();
-	KEYBOARD_getEvent(&nav);
+		KEYBOARD_ScanKeyboards();
+		KEYBOARD_getEvent(&nav);
         // USER PRESSED 'UP' > SCROLL UP
         if (WPAD_ButtonsDown(0) & WPAD_BUTTON_UP)
         {
@@ -890,73 +992,99 @@ startofstuff:
                 startLine --;
                 longer = displayLines (startLine, 20, lines, numbers, numLines);
             }
-	    while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+	    	while (nav.type == KEYBOARD_PRESSED)
+	    	{
+	    		KEYBOARD_ScanKeyboards();
+	    		KEYBOARD_getEvent(&nav);
+	    	}
         }
 
         // USER PRESSED 'DOWN' > SCROLL DOWN
         if (WPAD_ButtonsDown(0) & WPAD_BUTTON_DOWN)
         {
-            if (startLine < numLines - 20 + 1 + longer & numLines > 20 - longer)
+            if ((startLine < (numLines - 20 + 1 + longer)) && (numLines > (20 - longer)))
             {
                 startLine ++;
                 longer = displayLines (startLine, 20, lines, numbers, numLines);
             }
-
         }
         if ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_DOWN))
         {
-            if (startLine < numLines - 20 + 1 + longer & numLines > 20 - longer)
+            if ((startLine < (numLines - 20 + 1 + longer)) && (numLines > (20 - longer)))
             {
                 startLine ++;
                 longer = displayLines (startLine, 20, lines, numbers, numLines);
             }
-	    while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+	    	while (nav.type == KEYBOARD_PRESSED)
+	    	{
+	    		KEYBOARD_ScanKeyboards();
+	    		KEYBOARD_getEvent(&nav);
+	    	}
         }
         //User pressed 1 or F12, so return to file selection
         if (WPAD_ButtonsDown(0) & WPAD_BUTTON_1)
         {
             goto first;
         }
+        
         if ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_F12))
         {
             goto first;
-	    while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+		    while (nav.type == KEYBOARD_PRESSED) 
+		    {
+		    	KEYBOARD_ScanKeyboards();
+		    	KEYBOARD_getEvent(&nav);
+		    }
         }
+        
         //User pressed 2 or Esc, so return to mainmenu
         if (WPAD_ButtonsDown(0) & WPAD_BUTTON_2)
         {
             directory = "/";
             goto veryfirst;
         }
+        
         if ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_ESCAPE))
         {
             directory = "/";
             goto veryfirst;
-	    while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+	    	while (nav.type == KEYBOARD_PRESSED)
+	    	{
+	    		KEYBOARD_ScanKeyboards();
+	    		KEYBOARD_getEvent(&nav);
+	    	}
         }
         //User pressed A or F11 (shortcut in KWrite), so toggle line numbers
         if (WPAD_ButtonsDown(0) & WPAD_BUTTON_A)
         {
-            if (numbers == "0")
+            if (numbers == 0)
             {
-                numbers = "1";
+                numbers = 1;
                 goto skipwm;
             }
-            else numbers = "0";
-	    skipwm:
+            else 
+            	numbers = 0;
+            	
+skipwm:
             longer = displayLines (startLine, 20, lines, numbers, numLines);
         }
         if ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_F11))
         {
-            if (numbers == "0")
+            if (numbers == 0)
             {
-                numbers = "1";
+                numbers = 1;
                 goto skipkb;
             }
-            else numbers = "0";
-	    skipkb:
+            else 
+            	numbers = 0;
+skipkb:
+	
             longer = displayLines (startLine, 20, lines, numbers, numLines);
-	    while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+	    	while (nav.type == KEYBOARD_PRESSED)
+	    	{
+	    		KEYBOARD_ScanKeyboards();
+	    		KEYBOARD_getEvent(&nav);
+	    	}
         }
         //User pressed HOME or F4 (comes from Alt+F4), so return to loader
         if (WPAD_ButtonsDown(0) & WPAD_BUTTON_HOME)
@@ -972,7 +1100,11 @@ startofstuff:
             cout << "\x1b[2;10H" << endl;
             cout << "\nReturning to loader..." << endl;
             exit(0);
-	    while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+	    	while (nav.type == KEYBOARD_PRESSED)
+	    	{
+	    		KEYBOARD_ScanKeyboards();
+	    		KEYBOARD_getEvent(&nav);
+	    	}
         }
     }
     //Something really weird happened, not even sure if it is possible to get here, but return something or people will start getting edgy...
