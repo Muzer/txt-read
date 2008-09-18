@@ -92,7 +92,7 @@ mxml_node_t *data;
    	data = mxmlFindElement(tree, tree, "settings", NULL, NULL, MXML_DESCEND);
    	if (strcmp(mxmlElementGetAttr(data, "version"), "1.0") != 0)
    	{
-   		cout << "You have an old version of the settings file. You may use it, but unexpected things such as crashes may happen, so it is best if you update it. Unless you update it manually, this will override your settings. Do you wish to update it? (1 = yes, 2 = no)";
+   		cout << "You have an old version of the settings file. You may use it, but it is highly likely to just crash, so it is best if you update it. Unless you update it manually, this will override your settings. Do you wish to update it? (1 or y = yes, 2 or n = no)";
    		if (LoadArgumentAsFile() == 1)
    		{
    			CreateXmlFile((char *)"/txt-read-settings.xml");
@@ -234,9 +234,9 @@ int displayLines(int startLine, int numLines, char **lines, int numbers, int tot
         if (totalLines == j) break; //if the number of lines in the file reaches j, STOP, otherwise it will crash on smaller files...
 
         if (numbers == 1) 
-        	longer = longer + ((strlen(lines[j]) + 7) / 80); //If numbers are on, add the number of extra lines due to line longness the wii will display to longer, but add 7 to the line length (number of chars in line number)
+        	longer = longer + ((strlen(lines[j]) + 7) / 80); //If numbers are on, add the number of physical lines for this logical line, but add 7 to the line length (number of chars in line number)
         else 
-        	longer = longer + (strlen(lines[j]) / 80);//Else, add the number of extra lines due to line longness the wii will display to longer (don't add 7)
+        	longer = longer + (strlen(lines[j]) / 80);//Else, add the number of physical lines for this logical line (don't add 7)
     }
 
     clrscr();
@@ -509,12 +509,14 @@ foundYet:
 //Controls for whether to use the wiiload (or possibly Wii HL, but untested) argument as the file or not.
 bool LoadArgumentAsFile()
 {
+	cout << endl << endl << "Make your choice" << endl << endl;
     while (1)
     {
 keyboardEvent nav;
         WPAD_ScanPads();
 	KEYBOARD_ScanKeyboards();
 	KEYBOARD_getEvent(&nav);
+
         if ( (WPAD_ButtonsDown(0) & WPAD_BUTTON_HOME) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_F4)) ) exit(0);
 
         if ( (WPAD_ButtonsDown(0) & WPAD_BUTTON_1) || (nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_y))
@@ -570,7 +572,9 @@ void mainmenu(){
     else{cout <<  setw(3) << " "  << "Update to the latest unstable (svn) version of txt-read" << endl;}
     if(menuselection == 3) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Settings"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Settings" << endl;}
-    if(menuselection == 4) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Exit to loader"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    if(menuselection == 4) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Credits"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    else{cout <<  setw(3) << " "  << "Credits" << endl;}
+    if(menuselection == 5) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Exit to loader"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Exit to loader" << endl;}
 }
 
@@ -581,10 +585,8 @@ FILE *f;
 s32 main_server;
 if(type == "svn"){
 	WPAD_ScanPads();
-	cout << "About to check for updates, press A to continue or B to quit.";
-	sleep(2);
-	WPAD_ScanPads();
-	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}
+	cout << "About to check for updates, press 1 or y to continue or 2 or n to quit.";
+	if(!LoadArgumentAsFile()) return;
 	load_network();
 	main_server = connect_to_server((char*)"74.86.133.219");
 	f = fopen(get_location((char*)"version.txt", (char*)"/"), "wb+");
@@ -595,12 +597,10 @@ if(type == "svn"){
 	net_close(main_server);
 	int vsnlines = howManyLines((char *)"version.txt");
 	clrscr();
-	if(vsnlines < 3){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press B to quit, or A if you want to install anyway)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}}
-	if(vsnlines == 3){cout << "You have the latest version (press B to quit, or A if you want to install anyway)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}}
-	cout << "There is a newer version available." << endl << endl << "Please note: The meta.xml on the SVN version is most likely out of date, and there is no readme. Please wait for the official release to properly learn of the changes. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. All SVN versions SHOULD have all of the previous functions working. Press A to continue, or B to quit to menu" << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
-	sleep(2);
-	WPAD_ScanPads();
-	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}
+	if(vsnlines < 4){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}
+	if(vsnlines == 4){cout << "You have the latest version (press 2 or n to quit, or 1 or y if you want to install anyway)";WPAD_ScanPads();	if(!LoadArgumentAsFile()) return;}
+	cout << "There is a newer version available." << endl << endl << "Please note: The meta.xml on the SVN version is most likely out of date, and there is no readme. Please wait for the official release to properly learn of the changes. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. All SVN versions SHOULD have all of the previous functions working. Press 1 or y to continue, or 2 or n to quit to menu" << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
+	if(!LoadArgumentAsFile()) return;
 	load_network();
 	main_server = connect_to_server((char*)"74.86.133.219");
 	f = fopen(get_location((char*)"boot.dol", (char*)"/apps/txt-read"), "wb+");
@@ -625,16 +625,13 @@ if(type == "svn"){
 	get_file(main_server, f);
 	fclose(f);
 	net_close(main_server);
-	cout << endl << endl << "*******MESSAGE FROM TXT-READ*******" << endl << endl << "Updating done. Please restart the app to see the changes take effect. Please note that there may or may not have been an update, it will download the latest version regardless. Press A..." << endl << endl << endl;
-	WPAD_ScanPads();
-	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();}
+	cout << endl << endl << "*******MESSAGE FROM TXT-READ*******" << endl << endl << "Updating done. Please restart the app to see the changes take effect. Press 1 or y..." << endl << endl << endl;
+	LoadArgumentAsFile();
 }
 if(type == "stable"){
 	WPAD_ScanPads();
-	cout << "About to check for updates, press A to continue or B to quit.";
-	sleep(2);
-	WPAD_ScanPads();
-	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}
+	cout << "About to check for updates, press 1 or y to continue or 2 or n to quit.";
+	if(!LoadArgumentAsFile()) return;
 	load_network();
 	main_server = connect_to_server((char *)"74.86.133.219");
 	f = fopen(get_location((char*)"version.txt", (char*)"/"), "wb+");
@@ -645,13 +642,10 @@ if(type == "stable"){
 	net_close(main_server);
 	int vsnlines = howManyLines((char *)"version.txt");
 	clrscr();
-	if(vsnlines < 3){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press B to quit, or A if you want to install anyway)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}}	
-	if(vsnlines == 3){cout << "You have the latest version (press B to quit, or A if you want to install anyway)";WPAD_ScanPads();while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}}	
-	WPAD_ScanPads();
-	cout << "You will shortly update this app to the latest stable version. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. If you wish to have more features, at the possible loss of stability, please choose the SVN option (you can only do this when you get back to the main menu.) Press A..." << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
-	sleep(2);
-	WPAD_ScanPads();
-	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();if(WPAD_ButtonsDown(0) & WPAD_BUTTON_B){sleep(1);return;}}
+	if(vsnlines < 3){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}	
+	if(vsnlines == 3){cout << "You have the latest version (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}	
+	cout << "You will shortly update this app to the latest stable version. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. If you wish to have more features, at the possible loss of stability, please choose the SVN option (you can only do this when you get back to the main menu.) Press 1 or y to continue, or 2 or n to quit..." << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
+	if(!LoadArgumentAsFile()) return;
 	load_network();
 	main_server = connect_to_server((char*)"74.86.133.219");
 	f = fopen(get_location((char*)"boot.dol", (char*)"/apps/txt-read"), "wb+");
@@ -676,9 +670,8 @@ if(type == "stable"){
 	get_file(main_server, f);
 	fclose(f);
 	net_close(main_server);
-	cout << endl << endl << "*******MESSAGE FROM TXT-READ*******" << endl << endl << "Updating done. Please restart the app to see the changes take effect. Please note that there may or may not have been an update, it will download the latest version regardless. Press A..." << endl << endl;
-	WPAD_ScanPads();
-	while (!(WPAD_ButtonsDown(0) & WPAD_BUTTON_A)){WPAD_ScanPads();}
+	cout << endl << endl << "*******MESSAGE FROM TXT-READ*******" << endl << endl << "Updating done. Please restart the app to see the changes take effect. Press 1 or y..." << endl << endl;
+	LoadArgumentAsFile();
 }
 }
 
@@ -797,6 +790,40 @@ keyboardEvent nav;
         }
 }
 }
+
+//Credits screen
+void credits(){
+	clrscr();
+	int i;int j;
+	for(i = 0;i != 50;++i){
+		cout << endl;
+	}
+	cout << "\x1b[44m\x1b[37mC R E D I T S\x1b[40m\x1b[37m";usleep(500000);
+	cout << endl; usleep(500000);
+	cout << endl; usleep(500000);
+	cout << endl << "\x1b[42m\x1b[37mCoders:\x1b[40m\x1b[37m";usleep(500000);
+	cout << endl << "        Muzer";usleep(500000);
+	cout << endl << "        mattgentl";usleep(500000);
+	cout << endl << "        CraZzy";usleep(500000);
+	cout << endl;usleep(500000);
+	cout << endl << "\x1b[42m\x1b[37mLib makers:\x1b[40m\x1b[37m";usleep(500000);
+	cout << endl << "            AlexLH (libwiiupdate)";usleep(500000);
+	cout << endl << "            Davyg (libwiikeyboard)";usleep(500000);
+	cout << endl << "            Bool (wiilight example)";usleep(500000);
+	cout << endl << "            Beardface (libmxml port)";usleep(500000);
+	cout << endl << "            svpe (libfat port)";usleep(500000);
+	cout << endl << "            All the people who made Wii Homebrew possible!";usleep(500000);
+	cout << endl;usleep(500000);
+	cout << endl << "\x1b[42m\x1b[37mEtc.\x1b[40m\x1b[37m";usleep(500000);
+	cout << endl << "     GizmoTheG (icon.png)";usleep(500000);
+	cout << endl << "     marcan (various things)";usleep(500000);
+	cout << endl << "     Bobbings (a real life friend), for all his support and kind words of";usleep(500000);
+	cout << endl << "     advice, and the donation of 20p.";usleep(500000);
+	for(j = 0;j != 30;++j){
+		cout << endl;usleep(500000);
+	}
+}
+
 //Controls for the menu
 void menucontrols(){
 while(1){
@@ -817,7 +844,7 @@ keyboardEvent nav;
         }
         if ((WPAD_ButtonsUp(0) & WPAD_BUTTON_DOWN) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_DOWN)))
         {
-            if (menuselection<4)
+            if (menuselection<5)
             {
                 ++menuselection;
 		mainmenu();
@@ -841,7 +868,8 @@ keyboardEvent nav;
             if(menuselection==1) {networkupdate("stable");sleep(1);mainmenu();}
 	    if(menuselection==2) {networkupdate("svn");sleep(1);mainmenu();}
 	    if(menuselection==3) {settingsmenu();sleep(1);mainmenu();}
-	    if(menuselection==4) {clrscr(); cout << "Returning to loader..."; exit(0);}
+            if(menuselection==4) {sleep(1);credits();sleep(1);mainmenu();}
+	    if(menuselection==5) {clrscr(); cout << "Returning to loader..."; exit(0);}
             while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
         }
 }
@@ -1101,5 +1129,5 @@ skipkb:
         }
     }
     //Something really weird happened, not even sure if it is possible to get here, but return something or people will start getting edgy...
-    return 0;
+    return 1;
 }
