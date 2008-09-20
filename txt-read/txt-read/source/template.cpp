@@ -825,6 +825,8 @@ void credits(){
 	cout << endl << "     marcan (various things)";usleep(500000);
 	cout << endl << "     Bobbings (a real life friend), for all his support and kind words of";usleep(500000);
 	cout << endl << "     advice, and the donation of 20p.";usleep(500000);
+	cout << endl << "     AlexLH (file space)";usleep(500000);
+	cout << endl << "     WarpedFla (file space)";usleep(500000);
 	for(j = 0;j != 30;++j){
 		cout << endl;usleep(500000);
 	}
