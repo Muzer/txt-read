@@ -46,6 +46,8 @@ int cursorline = 0;//Unused, ready for editting
 int cursorpos = 0;//As Above
 int menuselection = 0;//Selection in the main menu
 int smenuselection = 0;//Selection in the settings menu
+string argument = "";
+bool argumentchosen = 0;
 
 int boxDrawing();
 
@@ -564,6 +566,10 @@ keyboardEvent nav;
 void mainmenu(){
     clrscr();
     cout << "txt-read Main Menu\n\n";
+    if(argument != ""){
+	    if(menuselection == -1) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Load "<< argument << "\x1b[40;0m\x1b[37;1m" << endl;}
+            else{cout <<  setw(3) << " "  << "Load " << argument << endl;}
+    }
     if(menuselection == 0) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Load a file from SD"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Load a file from SD" << endl;}
     if(menuselection == 1) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Update to the latest stable version of txt-read"<< "\x1b[40;0m\x1b[37;1m" << endl;}
@@ -597,8 +603,8 @@ if(type == "svn"){
 	net_close(main_server);
 	int vsnlines = howManyLines((char *)"version.txt");
 	clrscr();
-	if(vsnlines < 4){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}
-	if(vsnlines == 4){cout << "You have the latest version (press 2 or n to quit, or 1 or y if you want to install anyway)";WPAD_ScanPads();	if(!LoadArgumentAsFile()) return;}
+	if(vsnlines < 5){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}
+	if(vsnlines == 5){cout << "You have the latest version (press 2 or n to quit, or 1 or y if you want to install anyway)";WPAD_ScanPads();	if(!LoadArgumentAsFile()) return;}
 	cout << "There is a newer version available." << endl << endl << "Please note: The meta.xml on the SVN version is most likely out of date, and there is no readme. Please wait for the official release to properly learn of the changes. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. All SVN versions SHOULD have all of the previous functions working. Press 1 or y to continue, or 2 or n to quit to menu" << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
 	if(!LoadArgumentAsFile()) return;
 	load_network();
@@ -642,8 +648,8 @@ if(type == "stable"){
 	net_close(main_server);
 	int vsnlines = howManyLines((char *)"version.txt");
 	clrscr();
-	if(vsnlines < 3){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}	
-	if(vsnlines == 3){cout << "You have the latest version (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}	
+	if(vsnlines < 4){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}	
+	if(vsnlines == 4){cout << "You have the latest version (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}	
 	cout << "You will shortly update this app to the latest stable version. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. If you wish to have more features, at the possible loss of stability, please choose the SVN option (you can only do this when you get back to the main menu.) Press 1 or y to continue, or 2 or n to quit..." << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
 	if(!LoadArgumentAsFile()) return;
 	load_network();
@@ -826,6 +832,7 @@ void credits(){
 
 //Controls for the menu
 void menucontrols(){
+if(argument != ""){menuselection = -1;mainmenu();}
 while(1){
 keyboardEvent nav;
         WPAD_ScanPads();
@@ -839,7 +846,14 @@ keyboardEvent nav;
 		mainmenu();
 		while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
             }
-
+	    else{
+		if (menuselection>-1 && argument != "")
+		{
+			--menuselection;
+			mainmenu();
+			while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+		}
+	    }
 
         }
         if ((WPAD_ButtonsUp(0) & WPAD_BUTTON_DOWN) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_DOWN)))
@@ -864,6 +878,7 @@ keyboardEvent nav;
 	if ( (WPAD_ButtonsHeld(0) & WPAD_BUTTON_A) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_RETURN)) )
         {
             clrscr();
+            if(menuselection==-1) {argumentchosen = 1; return;}
             if(menuselection==0) return;
             if(menuselection==1) {networkupdate("stable");sleep(1);mainmenu();}
 	    if(menuselection==2) {networkupdate("svn");sleep(1);mainmenu();}
@@ -912,28 +927,26 @@ int xmlfilelines, longer;
 		sleep(2);
 	}
 
-veryfirst:
+
 	
 	clrscr();
 
-	//Display the main menu, allow the user to select an option, and once Load a file from SD is selected, wait for 2 seconds...
-    if (argc == 2 && strcmp(argv[1], "") != 0)
-    {
-        cout << "It has been detected that you have specified an argument." << endl << "Do you want this to be loaded as your file? Press 1 for yes, 2 for no." << endl << "The argument you specified is: " << argv[1];
-        if (LoadArgumentAsFile())//If they said yes
-        {
-            tempName = argv[1];//Let the filename be the argument
-            goto startofstuff;//And skip to the action
-        }
-    }
+	
+	//IF the user specified an argument and that argument is not null (sendelf fix), make the argument variable equal to 
+    if (argc == 2 && strcmp(argv[1], "") != 0) argument = argv[1];
+
+veryfirst:
+
+//Display the main menu, allow the user to select an option, and once Load a file from SD is selected, wait for 2 seconds...
+    argumentchosen = 0;
     mainmenu();
     menucontrols();
     sleep(2);
 	
-	//Clear the screen, and make the big array
+
     clrscr();
     
-	//IF the user specified an argument and that argument is not null (sendelf fix), ask them if they want to load the file they specified
+    if(argumentchosen == 1) {tempName = argument; goto startofstuff;}
 
 //Broken code for loading from USB
 /*
