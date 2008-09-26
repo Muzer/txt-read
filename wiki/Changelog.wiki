@@ -16,3 +16,5 @@ What has been changed
 *0.5*: Added file selector (currently buggy but works).
 
 *1.0*: Finished file selector (partially me, partially CraZzy) - with subdirectories and proper scrolling and skip 5 files feature, added quick usage info, fixed many bugs, added option to toggle numbers, added a return to selector feature, added a progress bar, reinstated support for arguments.
+
+*1.1*: Proper main menu, credits, fixed some bugs, added saving of certain settings, libwiiupdate, USB Keyboard Support, Wii Disc Slot Lighting, and many more.
