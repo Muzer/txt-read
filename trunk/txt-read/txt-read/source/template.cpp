@@ -10,6 +10,8 @@
 #include <keyboard_keysym.h>
 #include <update.h>
 #include <mxml.h>
+#include <ogcsys.h>
+
 
 #include "wii.h"
 
@@ -48,6 +50,9 @@ int menuselection = 0;//Selection in the main menu
 int smenuselection = 0;//Selection in the settings menu
 string argument = "";
 bool argumentchosen = 0;
+char *favfile;
+bool favfilechosen = 0;
+string drive = "fat3:";
 
 int boxDrawing();
 
@@ -63,11 +68,12 @@ FILE *fp;
    data = mxmlNewElement(xml, "settings");
   
    //Create Some config value
-   mxmlElementSetAttr(data, "version","1.0");
+   mxmlElementSetAttr(data, "version","1.1");
    sprintf(temp, "%d", numbers);
    mxmlElementSetAttr(data, "numbers", temp);
    sprintf(temp, "%d", autoupdate);
    mxmlElementSetAttr(data, "autoupdate", temp);
+   mxmlElementSetAttr(data, "favfile", favfile);
 
    /* now lets save the xml file to a file! */
    fp = fopen(filename, "w");
@@ -83,6 +89,7 @@ void LoadXmlFile(char *filename)
 FILE *fp;
 mxml_node_t *tree;
 mxml_node_t *data;
+const char *favfiletmp;
 
    	/*Load our xml file! */
    	fp = fopen(filename, "r");
@@ -92,20 +99,22 @@ mxml_node_t *data;
    	/*Load and printf our values! */
    	/* As a note, its a good idea to normally check if node* is NULL */
    	data = mxmlFindElement(tree, tree, "settings", NULL, NULL, MXML_DESCEND);
-   	if (strcmp(mxmlElementGetAttr(data, "version"), "1.0") != 0)
+   	if (strcmp(mxmlElementGetAttr(data, "version"), "1.1") != 0)
    	{
    		cout << "You have an old version of the settings file. You may use it, but it is highly likely to just crash, so it is best if you update it. Unless you update it manually, this will override your settings. Do you wish to update it? (1 or y = yes, 2 or n = no)";
    		if (LoadArgumentAsFile() == 1)
    		{
-   			CreateXmlFile((char *)"/txt-read-settings.xml");
+   			CreateXmlFile((char *)"fat3:/txt-read-settings.xml");
    			return;
    		}
    	}
    	if (strcmp(mxmlElementGetAttr(data,"numbers"), "1") == 0)
    		numbers = 1;
-
    	if (strcmp(mxmlElementGetAttr(data,"autoupdate"), "1") == 0)
 		autoupdate = 1;
+	favfiletmp = mxmlElementGetAttr(data,"favfile");
+	favfile = strdup(favfiletmp);
+
 
    /* Yay Done! Now lets be considerate programmers, and put memory back how
       we found it before we started playing with it...*/
@@ -266,11 +275,11 @@ int List(string &location)
     DIR_ITER* dir;
     id = 0, startfile = 0;
 
-    dir = diropen (location.c_str());
+    dir = diropen ((drive + location).c_str());
 
     if (dir == NULL) //If empty
     {
-        cout << "An error has occured. The cause of this error is unknown, but it used to cause an infinite loop. Returning to loader...";
+        cout << "One of the following occured:\nA) You tried to load from a nonexistant device.\nB) Communications with the device were interrupted (cause is unknown) \nReturning to loader...";
 	exit(0);
     }
     else
@@ -566,21 +575,27 @@ keyboardEvent nav;
 void mainmenu(){
     clrscr();
     cout << "txt-read Main Menu\n\n";
+    if(strcmp(favfile,"") != 0){
+	    if(menuselection == -2) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Load "<< favfile << "\x1b[40;0m\x1b[37;1m" << endl;}
+            else{cout <<  setw(3) << " "  << "Load " << favfile << endl;}
+    }
     if(argument != ""){
 	    if(menuselection == -1) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Load "<< argument << "\x1b[40;0m\x1b[37;1m" << endl;}
             else{cout <<  setw(3) << " "  << "Load " << argument << endl;}
     }
     if(menuselection == 0) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Load a file from SD"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Load a file from SD" << endl;}
-    if(menuselection == 1) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Update to the latest stable version of txt-read"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    if(menuselection == 1) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Load a file from USB"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    else{cout <<  setw(3) << " "  << "Load a file from USB" << endl;}
+    if(menuselection == 2) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Update to the latest stable version of txt-read"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Update to the latest stable version of txt-read" << endl;}
-    if(menuselection == 2) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Update to the latest unstable (svn) version of txt-read"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    if(menuselection == 3) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Update to the latest unstable (svn) version of txt-read"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Update to the latest unstable (svn) version of txt-read" << endl;}
-    if(menuselection == 3) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Settings"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    if(menuselection == 4) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Settings"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Settings" << endl;}
-    if(menuselection == 4) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Credits"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    if(menuselection == 5) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Credits"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Credits" << endl;}
-    if(menuselection == 5) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Exit to loader"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    if(menuselection == 6) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Exit to loader"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Exit to loader" << endl;}
 }
 
@@ -595,7 +610,7 @@ if(type == "svn"){
 	if(!LoadArgumentAsFile()) return;
 	load_network();
 	main_server = connect_to_server((char*)"74.86.133.219");
-	f = fopen(get_location((char*)"version.txt", (char*)"/"), "wb+");
+	f = fopen(get_location((char*)"version.txt", (char*)"fat3:/"), "wb+");
 	send_message(main_server, (char*)"/svn/version.txt", (char*)"www.muzer.wiibrew.exofire.net");
 	instructions_update();
 	get_file(main_server, f);
@@ -603,13 +618,13 @@ if(type == "svn"){
 	net_close(main_server);
 	int vsnlines = howManyLines((char *)"version.txt");
 	clrscr();
-	if(vsnlines < 5){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}
-	if(vsnlines == 5){cout << "You have the latest version (press 2 or n to quit, or 1 or y if you want to install anyway)";WPAD_ScanPads();	if(!LoadArgumentAsFile()) return;}
+	if(vsnlines < 6){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}
+	if(vsnlines == 6){cout << "You have the latest version (press 2 or n to quit, or 1 or y if you want to install anyway)";WPAD_ScanPads();	if(!LoadArgumentAsFile()) return;}
 	cout << "There is a newer version available." << endl << endl << "Please note: The meta.xml on the SVN version is most likely out of date, and there is no readme. Please wait for the official release to properly learn of the changes. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. All SVN versions SHOULD have all of the previous functions working. Press 1 or y to continue, or 2 or n to quit to menu" << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
 	if(!LoadArgumentAsFile()) return;
 	load_network();
 	main_server = connect_to_server((char*)"74.86.133.219");
-	f = fopen(get_location((char*)"boot.dol", (char*)"/apps/txt-read"), "wb+");
+	f = fopen(get_location((char*)"boot.dol", (char*)"fat3:/apps/txt-read"), "wb+");
 	send_message(main_server, (char*)"/svn/boot.dol", (char*)"www.muzer.wiibrew.exofire.net");
 	instructions_update();
 	get_file(main_server, f);
@@ -617,7 +632,7 @@ if(type == "svn"){
 	net_close(main_server);
 	load_network();
 	main_server = connect_to_server((char*)"74.86.133.219");
-	f = fopen(get_location((char*)"meta.xml", (char*)"/apps/txt-read"), "wb+");
+	f = fopen(get_location((char*)"meta.xml", (char*)"fat3:/apps/txt-read"), "wb+");
 	send_message(main_server, (char*)"/stable/meta.xml", (char*)"www.muzer.wiibrew.exofire.net");
 	instructions_update();
 	get_file(main_server, f);
@@ -625,7 +640,7 @@ if(type == "svn"){
 	net_close(main_server);
 	load_network();
 	main_server = connect_to_server((char*)"74.86.133.219");
-	f = fopen(get_location((char*)"icon.png", (char*)"/apps/txt-read"), "wb+");
+	f = fopen(get_location((char*)"icon.png", (char*)"fat3:/apps/txt-read"), "wb+");
 	send_message(main_server, (char*)"/stable/icon.png", (char*)"www.muzer.wiibrew.exofire.net");
 	instructions_update();
 	get_file(main_server, f);
@@ -640,7 +655,7 @@ if(type == "stable"){
 	if(!LoadArgumentAsFile()) return;
 	load_network();
 	main_server = connect_to_server((char *)"74.86.133.219");
-	f = fopen(get_location((char*)"version.txt", (char*)"/"), "wb+");
+	f = fopen(get_location((char*)"version.txt", (char*)"fat3:/"), "wb+");
 	send_message(main_server, (char *)"/stable/version.txt", (char *)"www.muzer.wiibrew.exofire.net");
 	instructions_update();
 	get_file(main_server, f);
@@ -654,7 +669,7 @@ if(type == "stable"){
 	if(!LoadArgumentAsFile()) return;
 	load_network();
 	main_server = connect_to_server((char*)"74.86.133.219");
-	f = fopen(get_location((char*)"boot.dol", (char*)"/apps/txt-read"), "wb+");
+	f = fopen(get_location((char*)"boot.dol", (char*)"fat3:/apps/txt-read"), "wb+");
 	send_message(main_server, (char*)"/stable/boot.dol", (char*)"www.muzer.wiibrew.exofire.net");
 	instructions_update();
 	get_file(main_server, f);
@@ -662,7 +677,7 @@ if(type == "stable"){
 	net_close(main_server);
 	load_network();
 	main_server = connect_to_server((char*)"74.86.133.219");
-	f = fopen(get_location((char*)"meta.xml", (char*)"/apps/txt-read"), "wb+");
+	f = fopen(get_location((char*)"meta.xml", (char*)"fat3:/apps/txt-read"), "wb+");
 	send_message(main_server, (char*)"/stable/meta.xml", (char*)"www.muzer.wiibrew.exofire.net");
 	instructions_update();
 	get_file(main_server, f);
@@ -670,7 +685,7 @@ if(type == "stable"){
 	net_close(main_server);
 	load_network();
 	main_server = connect_to_server((char*)"74.86.133.219");
-	f = fopen(get_location((char*)"icon.png", (char*)"/apps/txt-read"), "wb+");
+	f = fopen(get_location((char*)"icon.png", (char*)"fat3:/apps/txt-read"), "wb+");
 	send_message(main_server, (char*)"/stable/icon.png", (char*)"www.muzer.wiibrew.exofire.net");
 	instructions_update();
 	get_file(main_server, f);
@@ -708,11 +723,16 @@ void settingsmenudisplay()
     	cout << "  Off" << endl;
     
     if (smenuselection == 2)
+	cout << ">> " << "\x1b[47;1m\x1b[30m" << "Favourite file                "<< "\x1b[40;0m\x1b[37;1m" << favfile << endl;
+    else
+	cout <<  setw(3) << " "  << "Favourite file                " << favfile << endl;
+
+    if (smenuselection == 3)
     	cout << ">> " << "\x1b[47;1m\x1b[30m" << "Save"<< "\x1b[40;0m\x1b[37;1m" << endl;
     else
     	cout <<  setw(3) << " "  << "Save" << endl;
     	
-    if (smenuselection == 3) 
+    if (smenuselection == 4) 
     	cout << ">> " << "\x1b[47;1m\x1b[30m" << "Return to menu"<< "\x1b[40;0m\x1b[37;1m" << endl;    	
     else
     	cout <<  setw(3) << " "  << "Return to menu" << endl;
@@ -738,7 +758,7 @@ keyboardEvent nav;
         }
         if ((WPAD_ButtonsUp(0) & WPAD_BUTTON_DOWN) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_DOWN)))
         {
-            if (smenuselection<3)
+            if (smenuselection<4)
             {
                 ++smenuselection;
 		settingsmenudisplay();
@@ -777,16 +797,37 @@ keyboardEvent nav;
             	settingsmenudisplay();
             	sleep(1);
             }
-	    	if (smenuselection == 2) 
-	    	{
-	    		CreateXmlFile((char *)"/txt-read-settings.xml");
-	    		clrscr();
-	    		cout << "Settings saved. Wait 3 secs...";
-	    		sleep(3);
-	    		settingsmenudisplay();
-	    	}
-	    	if (smenuselection == 3) 
-	    		return;
+	    if(smenuselection == 2)
+	    {
+		clrscr();
+		cout << "Please select your file. This will appear as an option in the main menu so you can quickly load it.";
+		sleep(3);
+		clrscr();
+		cout << "\x1b[0;5H" << endl;
+		boxDrawing();
+
+		//Move the cursor, Set directory to root, list the directory and allow user to select a file
+		moveIt();
+		List(directory);
+		Select(id);
+		selectFiles();
+		tempName = directory + file;
+		favfile = strdup(tempName.c_str());
+		clrscr();
+		cout << "File " << favfile << " has been selected.";
+		sleep(2);
+		settingsmenudisplay();
+	    }
+	    if (smenuselection == 3) 
+	    {
+	    	CreateXmlFile((char *)"fat3:/txt-read-settings.xml");
+	    	clrscr();
+	    	cout << "Settings saved. Wait 3 secs...";
+	    	sleep(3);
+	    	settingsmenudisplay();
+	    }
+	    if (smenuselection == 4) 
+	    	return;
             
             while(nav.type == KEYBOARD_PRESSED)
             {
@@ -794,6 +835,10 @@ keyboardEvent nav;
             	KEYBOARD_getEvent(&nav);
             }
         }
+	if ( (WPAD_ButtonsHeld(0) & WPAD_BUTTON_B) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_ESCAPE)) ){
+	favfile = strdup((char*)"");
+	settingsmenudisplay();
+	}
 }
 }
 
@@ -835,6 +880,7 @@ void credits(){
 //Controls for the menu
 void menucontrols(){
 if(argument != ""){menuselection = -1;mainmenu();}
+if(argument == "" && strcmp(favfile, "") != 0){menuselection = -2;mainmenu();}
 while(1){
 keyboardEvent nav;
         WPAD_ScanPads();
@@ -855,14 +901,24 @@ keyboardEvent nav;
 			mainmenu();
 			while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
 		}
+		else{
+			if (menuselection>-2 && strcmp(favfile, "")){
+				--menuselection;
+				if(menuselection == -1 && argument == "") menuselection = -2;
+				mainmenu();
+				while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
+			}
+		}
 	    }
+
 
         }
         if ((WPAD_ButtonsUp(0) & WPAD_BUTTON_DOWN) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_DOWN)))
         {
-            if (menuselection<5)
+            if (menuselection<6)
             {
                 ++menuselection;
+		if(menuselection == -1 && argument == "") menuselection = 0;
 		mainmenu();
 		while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
             }
@@ -880,13 +936,15 @@ keyboardEvent nav;
 	if ( (WPAD_ButtonsHeld(0) & WPAD_BUTTON_A) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_RETURN)) )
         {
             clrscr();
+	    if(menuselection==-2) {favfilechosen = 1; return;}
             if(menuselection==-1) {argumentchosen = 1; return;}
-            if(menuselection==0) return;
-            if(menuselection==1) {networkupdate("stable");sleep(1);mainmenu();}
-	    if(menuselection==2) {networkupdate("svn");sleep(1);mainmenu();}
-	    if(menuselection==3) {settingsmenu();sleep(1);mainmenu();}
-            if(menuselection==4) {sleep(1);credits();sleep(1);mainmenu();}
-	    if(menuselection==5) {clrscr(); cout << "Returning to loader..."; exit(0);}
+            if(menuselection==0) {drive = "fat3:";return;}
+	    if(menuselection==1) {drive = "fat4:"; return;}
+            if(menuselection==2) {networkupdate("stable");sleep(1);mainmenu();}
+	    if(menuselection==3) {networkupdate("svn");sleep(1);mainmenu();}
+	    if(menuselection==4) {settingsmenu();sleep(1);mainmenu();}
+            if(menuselection==5) {sleep(1);credits();sleep(1);mainmenu();}
+	    if(menuselection==6) {clrscr(); cout << "Returning to loader..."; exit(0);}
             while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
         }
 }
@@ -896,6 +954,7 @@ keyboardEvent nav;
 //Main loop
 int main(int argc, char **argv)
 {
+
 char **lines;
 keyboardEvent nav;
 int xmlfilelines, longer;
@@ -908,19 +967,18 @@ int xmlfilelines, longer;
     // e.g. printf ("\x1b[%d;%dH", row, column )
 	clrscr();
 
-	xmlfilelines = howManyLines((char *)"/txt-read-settings.xml");
+	xmlfilelines = howManyLines((char *)"fat3:/txt-read-settings.xml");
 	clrscr();
 	if (xmlfilelines == 0)
 	{
 		clrscr();
 		cout << "Settings file does not exist, creating...";
 		sleep(5);
-		CreateXmlFile((char *)"/txt-read-settings.xml");
+		CreateXmlFile((char *)"fat3:/txt-read-settings.xml");
 		cout << " Created";
 		sleep(2);
 	}
-
-	LoadXmlFile((char *)"/txt-read-settings.xml");
+	LoadXmlFile((char *)"fat3:/txt-read-settings.xml");
 	if (autoupdate == 1)
 	{
 		cout << "Automatic update triggered, updating...";
@@ -941,14 +999,17 @@ veryfirst:
 
 //Display the main menu, allow the user to select an option, and once Load a file from SD is selected, wait for 2 seconds...
     argumentchosen = 0;
+    favfilechosen = 0;
     mainmenu();
     menucontrols();
     sleep(2);
 	
 
     clrscr();
+
     
     if(argumentchosen == 1) {tempName = argument; goto startofstuff;}
+    if(favfilechosen == 1) {tempName = favfile; goto startofstuff;}
 
 //Broken code for loading from USB
 /*
@@ -977,7 +1038,7 @@ first:
 	//Do something with the cursor (can't be bothered to look what)
     cout << "\x1b[37;1m";
 	//Generate the full path of the file to be loaded
-    tempName = directory+file;
+    tempName = drive+directory+file;
 
 startofstuff:
 
