@@ -22,8 +22,8 @@ void init(){
 	xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
 	
 	// Initialise the console, required for printf
-	console_init(xfb,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
-	
+// 	console_init(xfb,20,20,rmode->fbWidth,rmode->xfbHeight,rmode->fbWidth*VI_DISPLAY_PIX_SZ);
+	CON_InitEx(rmode, 20,30,rmode->fbWidth-40,rmode->xfbHeight-60); // Better way not working yet
 	// Set up the video registers with the chosen mode
 	VIDEO_Configure(rmode);
 	
@@ -35,6 +35,7 @@ void init(){
 
 	// Flush the video register changes to the hardware
 	VIDEO_Flush();
+	VIDEO_ClearFrameBuffer(rmode, xfb, COLOR_BLACK);
 
 	// Wait for Video setup to complete
 	VIDEO_WaitVSync();
