@@ -618,8 +618,8 @@ if(type == "svn"){
 	net_close(main_server);
 	int vsnlines = howManyLines((char *)"version.txt");
 	clrscr();
-	if(vsnlines < 6){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}
-	if(vsnlines == 6){cout << "You have the latest version (press 2 or n to quit, or 1 or y if you want to install anyway)";WPAD_ScanPads();	if(!LoadArgumentAsFile()) return;}
+	if(vsnlines < 7){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}
+	if(vsnlines == 7){cout << "You have the latest version (press 2 or n to quit, or 1 or y if you want to install anyway)";WPAD_ScanPads();	if(!LoadArgumentAsFile()) return;}
 	cout << "There is a newer version available." << endl << endl << "Please note: The meta.xml on the SVN version is most likely out of date, and there is no readme. Please wait for the official release to properly learn of the changes. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. All SVN versions SHOULD have all of the previous functions working. Press 1 or y to continue, or 2 or n to quit to menu" << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
 	if(!LoadArgumentAsFile()) return;
 	load_network();
@@ -723,9 +723,9 @@ void settingsmenudisplay()
     	cout << "  Off" << endl;
     
     if (smenuselection == 2)
-	cout << ">> " << "\x1b[47;1m\x1b[30m" << "Favourite file                "<< "\x1b[40;0m\x1b[37;1m" << favfile << endl;
+	cout << ">> " << "\x1b[47;1m\x1b[30m" << "Favourite file (B to reset) "<< "\x1b[40;0m\x1b[37;1m" << favfile << endl;
     else
-	cout <<  setw(3) << " "  << "Favourite file                " << favfile << endl;
+	cout <<  setw(3) << " "  << "Favourite file (B to reset) " << favfile << endl;
 
     if (smenuselection == 3)
     	cout << ">> " << "\x1b[47;1m\x1b[30m" << "Save"<< "\x1b[40;0m\x1b[37;1m" << endl;
@@ -800,6 +800,9 @@ keyboardEvent nav;
 	    if(smenuselection == 2)
 	    {
 		clrscr();
+		cout << "On which storage device do you want your file to be? (1 for SD, 2 for USB)";
+		if(LoadArgumentAsFile() == 1) drive = "fat3:";
+		else drive = "fat4:";
 		cout << "Please select your file. This will appear as an option in the main menu so you can quickly load it.";
 		sleep(3);
 		clrscr();
@@ -811,7 +814,7 @@ keyboardEvent nav;
 		List(directory);
 		Select(id);
 		selectFiles();
-		tempName = directory + file;
+		tempName = drive + directory + file;
 		favfile = strdup(tempName.c_str());
 		clrscr();
 		cout << "File " << favfile << " has been selected.";

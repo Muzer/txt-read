@@ -11,6 +11,8 @@ void init(){
 	
 	// This function initialises the attached controllers
 	WPAD_Init();
+	// Initialise GC pads
+	PAD_Init();
 	
 	// Obtain the preferred video mode from the system
 	// This will correspond to the settings in the Wii menu
@@ -40,6 +42,8 @@ void init(){
 
 	// Initalise all inserted memory storage devices
 	fatInitDefault();
+	// Initialise disc slot light
 	WIILIGHT_Init();
+	// Initialise keyboard
 	KEYBOARD_Init();
 }
