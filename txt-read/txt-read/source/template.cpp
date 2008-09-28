@@ -209,7 +209,7 @@ char **createArrayFromFile(char *filename, float numLines)
 
             // GO TO POSITION 2,0 AND CALCULATE PERCENTAGE
             printf("\033[2;0f");
-            equalses = (i / (numLines - 1)) * 80;
+            equalses = (i / (numLines - 1)) * 74;
             percentage = (i / (numLines - 1)) * 100;
 	    light = (i / (numLines - 1)) * 255;
 			//PRINT THE LOADING BAR, PERCENTAGE, AND FADE THE LIGHT
@@ -245,9 +245,9 @@ int displayLines(int startLine, int numLines, char **lines, int numbers, int tot
         if (totalLines == j) break; //if the number of lines in the file reaches j, STOP, otherwise it will crash on smaller files...
 
         if (numbers == 1) 
-        	longer = longer + ((strlen(lines[j]) + 7) / 80); //If numbers are on, add the number of physical lines for this logical line, but add 7 to the line length (number of chars in line number)
+        	longer = longer + ((strlen(lines[j]) + 7) / 74); //If numbers are on, add the number of physical lines for this logical line, but add 7 to the line length (number of chars in line number)
         else 
-        	longer = longer + (strlen(lines[j]) / 80);//Else, add the number of physical lines for this logical line (don't add 7)
+        	longer = longer + (strlen(lines[j]) / 74);//Else, add the number of physical lines for this logical line (don't add 7)
     }
 
     clrscr();
@@ -312,7 +312,7 @@ int x;
 file = files[iSelected];
     boxDrawing();
 
-    for (x=startfile; x != startfile + 20; x++)
+    for (x=startfile; x != startfile + 17; x++)
     {
         if ( x== fcount) 
         	return; //this needed if things in current dir < 20
@@ -361,8 +361,8 @@ int n;
                 clrscr();
                 moveIt();
                 id += 5;
-                if (id > startfile+19) 
-                	startfile = id-19;
+                if (id > startfile+16) 
+                	startfile = id-16;
                 file = files[id];
                 Select(id);
 				while (nav.type == KEYBOARD_PRESSED)
@@ -376,8 +376,8 @@ int n;
                 clrscr();
                 moveIt();
                 id += (fcount-id)-1;
-                if (id > startfile+19) 
-                	startfile=id-19;
+                if (id > startfile+16) 
+                	startfile=id-16;
                 file = files[id];
                 Select(id);
 				while (nav.type == KEYBOARD_PRESSED)
@@ -429,7 +429,7 @@ int n;
                 clrscr();
                 moveIt();
                 ++id;
-                if (id>startfile+19) 
+                if (id>startfile+16) 
                 	++startfile;
                 file = files[id];
                 Select(id);
@@ -618,8 +618,8 @@ if(type == "svn"){
 	net_close(main_server);
 	int vsnlines = howManyLines((char *)"version.txt");
 	clrscr();
-	if(vsnlines < 8){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}
-	if(vsnlines == 8){cout << "You have the latest version (press 2 or n to quit, or 1 or y if you want to install anyway)";WPAD_ScanPads();	if(!LoadArgumentAsFile()) return;}
+	if(vsnlines < 9){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}
+	if(vsnlines == 9){cout << "You have the latest version (press 2 or n to quit, or 1 or y if you want to install anyway)";WPAD_ScanPads();	if(!LoadArgumentAsFile()) return;}
 	cout << "There is a newer version available." << endl << endl << "Please note: The meta.xml on the SVN version is most likely out of date, and there is no readme. Please wait for the official release to properly learn of the changes. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. All SVN versions SHOULD have all of the previous functions working. Press 1 or y to continue, or 2 or n to quit to menu" << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
 	if(!LoadArgumentAsFile()) return;
 	load_network();
@@ -706,21 +706,21 @@ void settingsmenudisplay()
     	cout <<  setw(3) << " "  << "Display line numbers";
     	
     if (numbers == 1)
-    	cout << "                                                  On" << endl;
+    	cout << "                                                On" << endl;
     
     if (numbers == 0) 
-    	cout << "                                                  Off" << endl;
+    	cout << "                                                Off" << endl;
     
     if (smenuselection == 1) 
-    	cout << ">> " << "\x1b[47;1m\x1b[30m" << "Automatic svn update on boot (requires reboot for update to be used)"<< "\x1b[40;0m\x1b[37;1m";
+    	cout << ">> " << "\x1b[47;1m\x1b[30m" << "Automatic svn update on boot"<< "\x1b[40;0m\x1b[37;1m";
     else
-    	cout <<  setw(3) << " "  << "Automatic svn update on boot (requires reboot for update to be used)";
+    	cout <<  setw(3) << " "  << "Automatic svn update on boot";
     
     if (autoupdate == 1)
-    	cout << "  On" << endl;
+    	cout << "                                        On" << endl;
     
     if (autoupdate == 0) 
-    	cout << "  Off" << endl;
+    	cout << "                                        Off" << endl;
     
     if (smenuselection == 2)
 	cout << ">> " << "\x1b[47;1m\x1b[30m" << "Favourite file (B to reset) "<< "\x1b[40;0m\x1b[37;1m" << favfile << endl;
