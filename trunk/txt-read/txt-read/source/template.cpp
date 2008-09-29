@@ -13,6 +13,7 @@
 #include <ogcsys.h>
 
 
+
 #include "wii.h"
 
 //Some things to keep the code tidy
@@ -55,6 +56,17 @@ bool favfilechosen = 0;
 string drive = "fat3:";
 
 int boxDrawing();
+
+static bool initialise_dvd() {
+    printf("Initialising DVD.  Please insert a disc and wait for the DVD to spin up...\n");
+    DI_Mount();
+    while (DI_GetStatus() & DVD_INIT) usleep(5000);
+    if (DI_GetStatus() & DVD_READY) {
+        ISO9660_Init();
+        return true;
+    }
+    return false;
+}
 
 void CreateXmlFile(char *filename)
 {
@@ -587,15 +599,17 @@ void mainmenu(){
     else{cout <<  setw(3) << " "  << "Load a file from SD" << endl;}
     if(menuselection == 1) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Load a file from USB"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Load a file from USB" << endl;}
-    if(menuselection == 2) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Update to the latest stable version of txt-read"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    if(menuselection == 2) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Load a file from DVD"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    else{cout <<  setw(3) << " "  << "Load a file from DVD" << endl;}
+    if(menuselection == 3) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Update to the latest stable version of txt-read"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Update to the latest stable version of txt-read" << endl;}
-    if(menuselection == 3) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Update to the latest unstable (svn) version of txt-read"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    if(menuselection == 4) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Update to the latest unstable (svn) version of txt-read"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Update to the latest unstable (svn) version of txt-read" << endl;}
-    if(menuselection == 4) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Settings"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    if(menuselection == 5) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Settings"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Settings" << endl;}
-    if(menuselection == 5) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Credits"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    if(menuselection == 6) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Credits"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Credits" << endl;}
-    if(menuselection == 6) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Exit to loader"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    if(menuselection == 7) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Exit to loader"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Exit to loader" << endl;}
 }
 
@@ -618,8 +632,8 @@ if(type == "svn"){
 	net_close(main_server);
 	int vsnlines = howManyLines((char *)"version.txt");
 	clrscr();
-	if(vsnlines < 9){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}
-	if(vsnlines == 9){cout << "You have the latest version (press 2 or n to quit, or 1 or y if you want to install anyway)";WPAD_ScanPads();	if(!LoadArgumentAsFile()) return;}
+	if(vsnlines < 10){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}
+	if(vsnlines == 10){cout << "You have the latest version (press 2 or n to quit, or 1 or y if you want to install anyway)";WPAD_ScanPads();	if(!LoadArgumentAsFile()) return;}
 	cout << "There is a newer version available." << endl << endl << "Please note: The meta.xml on the SVN version is most likely out of date, and there is no readme. Please wait for the official release to properly learn of the changes. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. All SVN versions SHOULD have all of the previous functions working. Press 1 or y to continue, or 2 or n to quit to menu" << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
 	if(!LoadArgumentAsFile()) return;
 	load_network();
@@ -943,11 +957,12 @@ keyboardEvent nav;
             if(menuselection==-1) {argumentchosen = 1; return;}
             if(menuselection==0) {drive = "fat3:";return;}
 	    if(menuselection==1) {drive = "fat4:"; return;}
-            if(menuselection==2) {networkupdate("stable");sleep(1);mainmenu();}
-	    if(menuselection==3) {networkupdate("svn");sleep(1);mainmenu();}
-	    if(menuselection==4) {settingsmenu();sleep(1);mainmenu();}
-            if(menuselection==5) {sleep(1);credits();sleep(1);mainmenu();}
-	    if(menuselection==6) {clrscr(); cout << "Returning to loader..."; exit(0);}
+	    if(menuselection==2) {drive = "dvd:"; clrscr(); if (!initialise_dvd()) {printf("\n\nUnable to initialise DVD. DI_GetStatus() == %i\n", DI_GetStatus()); sleep(5); exit(0);} return;}
+            if(menuselection==3) {networkupdate("stable");sleep(1);mainmenu();}
+	    if(menuselection==4) {networkupdate("svn");sleep(1);mainmenu();}
+	    if(menuselection==5) {settingsmenu();sleep(1);mainmenu();}
+            if(menuselection==6) {sleep(1);credits();sleep(1);mainmenu();}
+	    if(menuselection==7) {clrscr(); cout << "Returning to loader..."; exit(0);}
             while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
         }
 }
