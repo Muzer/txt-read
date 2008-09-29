@@ -5,6 +5,10 @@
 #include <fat.h>
 #include <keyboard.h>
 #include <usbkeyboard.h>
+extern "C" {
+#include <iso/iso.h>
+#include <di/di.h>
+}
 
 
 

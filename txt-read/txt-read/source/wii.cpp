@@ -1,11 +1,12 @@
 #include "wii.h"
+#include <di/di.h>
 static void *xfb = NULL;
 static GXRModeObj *rmode = NULL;
 
 void WIILIGHT_Init();
 
 void init(){
-	
+	DI_Init();
   	// Initialise the video system
 	VIDEO_Init();
 	
