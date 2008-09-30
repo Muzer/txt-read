@@ -54,6 +54,7 @@ bool argumentchosen = 0;
 char *favfile = (char*)"";
 bool favfilechosen = 0;
 string drive = "fat3:";
+bool xml = 1;
 
 int boxDrawing();
 
@@ -601,15 +602,19 @@ void mainmenu(){
     else{cout <<  setw(3) << " "  << "Load a file from USB" << endl;}
     if(menuselection == 2) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Load a file from DVD"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Load a file from DVD" << endl;}
-    if(menuselection == 3) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Update to the latest stable version of txt-read"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    if(menuselection == 3) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Remount SD" << "\x1b[40;0m\x1b[37;1m" << endl;}
+    else{cout <<  setw(3) << " "  << "Remount SD" << endl;}
+    if(menuselection == 4) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Remount USB"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    else{cout <<  setw(3) << " "  << "Remount USB" << endl;}
+    if(menuselection == 5) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Update to the latest stable version of txt-read"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Update to the latest stable version of txt-read" << endl;}
-    if(menuselection == 4) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Update to the latest unstable (svn) version of txt-read"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    if(menuselection == 6) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Update to the latest unstable (svn) version of txt-read"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Update to the latest unstable (svn) version of txt-read" << endl;}
-    if(menuselection == 5) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Settings"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    if(menuselection == 7) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Settings"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Settings" << endl;}
-    if(menuselection == 6) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Credits"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    if(menuselection == 8) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Credits"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Credits" << endl;}
-    if(menuselection == 7) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Exit to loader"<< "\x1b[40;0m\x1b[37;1m" << endl;}
+    if(menuselection == 9) {cout << ">> " << "\x1b[47;1m\x1b[30m" << "Exit to loader"<< "\x1b[40;0m\x1b[37;1m" << endl;}
     else{cout <<  setw(3) << " "  << "Exit to loader" << endl;}
 }
 
@@ -632,8 +637,8 @@ if(type == "svn"){
 	net_close(main_server);
 	int vsnlines = howManyLines((char *)"version.txt");
 	clrscr();
-	if(vsnlines < 10){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}
-	if(vsnlines == 10){cout << "You have the latest version (press 2 or n to quit, or 1 or y if you want to install anyway)";WPAD_ScanPads();	if(!LoadArgumentAsFile()) return;}
+	if(vsnlines < 11){cout << "You have a newer version than the one on the server. Please notify me about this, on muzerakascooby@gmail.com (press 2 or n to quit, or 1 or y if you want to install anyway)";	if(!LoadArgumentAsFile()) return;}
+	if(vsnlines == 11){cout << "You have the latest version (press 2 or n to quit, or 1 or y if you want to install anyway)";WPAD_ScanPads();	if(!LoadArgumentAsFile()) return;}
 	cout << "There is a newer version available." << endl << endl << "Please note: The meta.xml on the SVN version is most likely out of date, and there is no readme. Please wait for the official release to properly learn of the changes. If you find any bugs, please report them to the Google Code bugtracker, my blog or forum, muzerakascooby@gmail.com or the Wiibrew talk page. Any other sites I will not see. All SVN versions SHOULD have all of the previous functions working. Press 1 or y to continue, or 2 or n to quit to menu" << endl << endl << "*******END OF MESSAGES FROM TXT-READ. UNTIL THE NEXT NOTE LIKE THIS, ALL THE MESSAGES ARE FROM LIBWIIUPDATE, SO DISREGARD THEM*******" << endl << endl;
 	if(!LoadArgumentAsFile()) return;
 	load_network();
@@ -740,12 +745,12 @@ void settingsmenudisplay()
 	cout << ">> " << "\x1b[47;1m\x1b[30m" << "Favourite file (B to reset) "<< "\x1b[40;0m\x1b[37;1m" << favfile << endl;
     else
 	cout <<  setw(3) << " "  << "Favourite file (B to reset) " << favfile << endl;
-
+if(xml == 1){
     if (smenuselection == 3)
     	cout << ">> " << "\x1b[47;1m\x1b[30m" << "Save"<< "\x1b[40;0m\x1b[37;1m" << endl;
     else
     	cout <<  setw(3) << " "  << "Save" << endl;
-    	
+    	}
     if (smenuselection == 4) 
     	cout << ">> " << "\x1b[47;1m\x1b[30m" << "Return to menu"<< "\x1b[40;0m\x1b[37;1m" << endl;    	
     else
@@ -764,6 +769,7 @@ keyboardEvent nav;
             if (smenuselection>0)
             {
                 --smenuselection;
+		if(xml == 0 && smenuselection == 3) smenuselection = 2;
 		settingsmenudisplay();
 		while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
             }
@@ -775,6 +781,7 @@ keyboardEvent nav;
             if (smenuselection<4)
             {
                 ++smenuselection;
+		if(xml == 0 && smenuselection == 3) smenuselection = 4;
 		settingsmenudisplay();
 		while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
             }
@@ -932,7 +939,7 @@ keyboardEvent nav;
         }
         if ((WPAD_ButtonsUp(0) & WPAD_BUTTON_DOWN) || ((nav.type == KEYBOARD_PRESSED) && (nav.keysym.sym == KEYBOARD_DOWN)))
         {
-            if (menuselection<6)
+            if (menuselection<9)
             {
                 ++menuselection;
 		if(menuselection == -1 && argument == "") menuselection = 0;
@@ -956,13 +963,15 @@ keyboardEvent nav;
 	    if(menuselection==-2) {favfilechosen = 1; return;}
             if(menuselection==-1) {argumentchosen = 1; return;}
             if(menuselection==0) {drive = "fat3:";return;}
-	    if(menuselection==1) {drive = "fat4:"; return;}
+	    if(menuselection==1) {drive = "fat4:";return;}
 	    if(menuselection==2) {drive = "dvd:"; clrscr(); if (!initialise_dvd()) {printf("\n\nUnable to initialise DVD. DI_GetStatus() == %i\n", DI_GetStatus()); sleep(5); exit(0);} return;}
-            if(menuselection==3) {networkupdate("stable");sleep(1);mainmenu();}
-	    if(menuselection==4) {networkupdate("svn");sleep(1);mainmenu();}
-	    if(menuselection==5) {settingsmenu();sleep(1);mainmenu();}
-            if(menuselection==6) {sleep(1);credits();sleep(1);mainmenu();}
-	    if(menuselection==7) {clrscr(); cout << "Returning to loader..."; exit(0);}
+	    if(menuselection==3) {clrscr();if(!fatUnmount(PI_INTERNAL_SD)){cout << "Unmounting SD failed";exit(0);}cout << "Unmounting SD\n";sleep(5);/*if(!fatInit(8192,true)){cout << "Reiniting fat failed";exit(0);}cout << "Initing fat\n";sleep(5);*/if(!fatMountNormalInterface(PI_INTERNAL_SD,8192)){cout << "Mounting SD failed";exit(0);}cout << "Mounting SD";sleep(5);mainmenu();}
+	    if(menuselection==4) {clrscr();if(!fatUnmount(PI_USBSTORAGE)){cout << "Unmounting USB failed";exit(0);}cout << "Unmounting USB\n";sleep(5);/*if(!fatInit(8192,true)){cout << "Reiniting fat failed";exit(0);}cout << "Initing fat\n";sleep(5);*/if(!fatMountNormalInterface(PI_USBSTORAGE,8192)){cout << "Mounting USB failed";exit(0);}cout << "Mounting USB";sleep(5);mainmenu();}
+            if(menuselection==5) {networkupdate("stable");sleep(1);mainmenu();}
+	    if(menuselection==6) {networkupdate("svn");sleep(1);mainmenu();}
+	    if(menuselection==7) {settingsmenu();sleep(1);mainmenu();}
+            if(menuselection==8) {sleep(1);credits();sleep(1);mainmenu();}
+	    if(menuselection==9) {clrscr(); cout << "Returning to loader..."; exit(0);}
             while(nav.type == KEYBOARD_PRESSED){KEYBOARD_ScanKeyboards();KEYBOARD_getEvent(&nav);}
         }
 }
@@ -990,7 +999,9 @@ int xmlfilelines, longer;
 	if (xmlfilelines == 0)
 	{
 		clrscr();
-		cout << "Settings file does not exist, creating...";
+		cout << "Settings file does not exist, do you wish to create one? Press 1 or y for yes, 2 or n for no";
+		if(!LoadArgumentAsFile()){xml = 0;goto endofxmlcrap;}
+		cout << "Creating settings file... ";
 		sleep(5);
 		CreateXmlFile((char *)"fat3:/txt-read-settings.xml");
 		cout << " Created";
@@ -1005,7 +1016,7 @@ int xmlfilelines, longer;
 		sleep(2);
 	}
 
-
+endofxmlcrap:
 	
 	clrscr();
 
