@@ -14,5 +14,5 @@ extern "C" {
 
 
 
-void init();
+int init();
 #endif
